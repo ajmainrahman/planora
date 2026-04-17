@@ -9,7 +9,7 @@ import {
   useCreateProgressNote,
   getGetIdeaQueryKey
 } from "@workspace/api-client-react";
-import { ProgressNote } from "@workspace/api-client-react";
+import type { ProgressNote } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

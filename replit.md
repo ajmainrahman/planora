@@ -18,7 +18,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Apps
 
-- **Idea Journal** (`artifacts/idea-journal`) — React/Vite web app at `/` for planning ideas, tracking statuses, and writing progress notes.
+- **Planora** (`artifacts/idea-journal`) — React/Vite web app at `/` for planning ideas, tracking statuses, filtering the planning board, and writing progress notes.
 - **API Server** (`artifacts/api-server`) — shared Express API mounted at `/api`.
 
 ## Idea Journal Data Model

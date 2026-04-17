@@ -1,28 +1,26 @@
 import { Link } from "wouter";
-import { BookOpen, Search, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-30 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group transition-opacity hover:opacity-80">
-            <div className="bg-primary/10 p-2 rounded-xl text-primary">
-              <BookOpen className="w-5 h-5" />
+          <Link href="/" className="flex items-center gap-3 group transition-opacity hover:opacity-80">
+            <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground shadow-sm flex items-center justify-center">
+              <svg viewBox="0 0 36 36" className="h-7 w-7" aria-hidden="true">
+                <path d="M10 27V9h10.2c4.1 0 7 2.7 7 6.6 0 3.8-2.9 6.5-7 6.5h-5.1V27H10Z" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round" />
+                <path d="M15.1 14.3h4.7c1.2 0 2 .6 2 1.5s-.8 1.5-2 1.5h-4.7v-3Z" fill="currentColor" />
+                <circle cx="26" cy="26" r="2.2" fill="currentColor" />
+              </svg>
             </div>
-            <span className="font-serif text-lg font-medium tracking-tight text-foreground">
-              Idea Journal
-            </span>
+            <div className="leading-tight">
+              <span className="block font-serif text-xl font-medium tracking-tight text-foreground">Planora</span>
+              <span className="hidden text-xs font-medium text-muted-foreground sm:block">Ideas into motion</span>
+            </div>
           </Link>
           
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
-              <Search className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
-              <Settings className="w-5 h-5" />
-            </Button>
+          <div className="hidden rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm sm:block">
+            Plan. Journal. Share.
           </div>
         </div>
       </header>

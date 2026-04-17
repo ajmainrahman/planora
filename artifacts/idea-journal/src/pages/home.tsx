@@ -1,6 +1,5 @@
 import { Layout } from "@/components/layout";
 import { DashboardStats } from "@/components/dashboard-stats";
-import { ActivityFeed } from "@/components/activity-feed";
 import { IdeaBoard } from "@/components/idea-board";
 import { CreateIdeaDialog } from "@/components/create-idea-dialog";
 
@@ -11,10 +10,10 @@ export default function Home() {
         <section className="flex flex-col md:flex-row gap-8 items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-4xl font-serif font-medium tracking-tight text-foreground">
-              Your Thinking Space
+              Planora
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
-              Capture your seeds of thought, plan their growth, and document the journey.
+              Capture ideas, shape them into plans, and keep a clear journal of every step forward.
             </p>
           </div>
           <CreateIdeaDialog />
@@ -22,18 +21,14 @@ export default function Home() {
 
         <DashboardStats />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-serif font-medium text-foreground">Active Ideas</h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-serif font-medium text-foreground">Planning Board</h2>
+              <p className="text-sm text-muted-foreground">Search, filter, and follow ideas as they move from seed to shared.</p>
             </div>
-            <IdeaBoard />
           </div>
-          
-          <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-xl font-serif font-medium text-foreground">Recent Activity</h2>
-            <ActivityFeed />
-          </div>
+          <IdeaBoard />
         </div>
       </div>
     </Layout>

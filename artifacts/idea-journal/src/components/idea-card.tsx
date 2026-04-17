@@ -1,11 +1,11 @@
 import { Link } from "wouter";
-import { Idea } from "@workspace/api-client-react";
+import type { Idea } from "@workspace/api-client-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronRight, Target } from "lucide-react";
 
-export function IdeaCard({ idea }: { idea: Idea }) {
+export function IdeaCard({ idea, compact = false }: { idea: Idea; compact?: boolean }) {
   const statusColors = {
     seed: "bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300 border-stone-200 dark:border-stone-800",
     planning: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800",
@@ -22,7 +22,7 @@ export function IdeaCard({ idea }: { idea: Idea }) {
   return (
     <Link href={`/ideas/${idea.id}`}>
       <Card className="h-full border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 rounded-2xl overflow-hidden group cursor-pointer flex flex-col hover:-translate-y-1">
-        <CardContent className="p-6 flex-1 flex flex-col gap-3">
+        <CardContent className={`${compact ? "p-4" : "p-6"} flex-1 flex flex-col gap-3`}>
           <div className="flex justify-between items-start">
             <Badge variant="outline" className={`font-medium ${statusColors[idea.status]} border capitalize px-2.5 py-0.5 rounded-full`}>
               {idea.status}
@@ -34,7 +34,7 @@ export function IdeaCard({ idea }: { idea: Idea }) {
           </div>
           
           <div className="space-y-1">
-            <h3 className="font-serif text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className={`font-serif font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1 ${compact ? "text-lg" : "text-xl"}`}>
               {idea.title}
             </h3>
             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
@@ -49,7 +49,7 @@ export function IdeaCard({ idea }: { idea: Idea }) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="px-6 py-4 bg-muted/20 border-t flex justify-between items-center text-xs text-muted-foreground">
+        <CardFooter className={`${compact ? "px-4 py-3" : "px-6 py-4"} bg-muted/20 border-t flex justify-between items-center text-xs text-muted-foreground`}>
           <div className="flex items-center gap-2">
             <span className="px-2 py-1 rounded-md bg-background border shadow-sm">{idea.category}</span>
           </div>

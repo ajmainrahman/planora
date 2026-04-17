@@ -2,7 +2,7 @@ import { useListActivity, getListActivityQueryKey } from "@workspace/api-client-
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { PlusCircle, Edit3, MessageSquare } from "lucide-react";
-import { ActivityItem } from "@workspace/api-client-react";
+import type { ActivityItem } from "@workspace/api-client-react";
 
 export function ActivityFeed() {
   const { data: activities, isLoading } = useListActivity({

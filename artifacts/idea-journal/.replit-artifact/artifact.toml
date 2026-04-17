@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Idea Journal"
+title = "Planora"
 version = "1.0.0"
 id = "artifacts/idea-journal"
 router = "path"
