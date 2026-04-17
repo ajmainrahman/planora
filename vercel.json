@@ -1,5 +1,8 @@
 {
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/idea-journal run build",
   "outputDirectory": "artifacts/idea-journal/dist",
-  "installCommand": "corepack enable && pnpm install --frozen-lockfile"
+  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
