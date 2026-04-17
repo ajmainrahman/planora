@@ -1,5 +1,5 @@
 {
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/idea-journal run build",
-  "outputDirectory": "artifacts/idea-journal/dist/public",
+  "outputDirectory": "artifacts/idea-journal/dist",
   "installCommand": "corepack enable && pnpm install --frozen-lockfile"
 }
