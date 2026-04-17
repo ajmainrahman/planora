@@ -1,15 +1,16 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
-import { desc } from "drizzle-orm";
+import pkg from "pg";
+import { desc, eq } from "drizzle-orm";
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-const { Pool } = pg;
+const { Pool } = pkg;
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 1,
   ssl: { rejectUnauthorized: false },
 });
+
 const db = drizzle(pool);
 
 const ideasTable = pgTable("ideas", {
@@ -26,7 +27,7 @@ const ideasTable = pgTable("ideas", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -44,6 +45,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: String(err) });
   }
 }
