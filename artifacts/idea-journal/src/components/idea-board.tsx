@@ -3,7 +3,6 @@ import { useListIdeas, getListIdeasQueryKey } from "@workspace/api-client-react"
 import { IdeaCard } from "@/components/idea-card";
 import { IdeaFeedCard } from "@/components/idea-feed-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Empty } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,11 +85,11 @@ export function IdeaBoard() {
 
   if (!ideas || ideas.length === 0) {
     return (
-      <Empty
-        icon="lightbulb"
-        title="The board is empty"
-        description="Plant your first seed to start growing your ideas."
-      />
+      <div className="rounded-2xl border border-dashed bg-card/60 p-10 text-center">
+        <span className="text-4xl">💡</span>
+        <h3 className="mt-4 font-serif text-2xl font-medium text-foreground">The board is empty</h3>
+        <p className="mt-2 text-sm text-muted-foreground">Plant your first seed to start growing your ideas.</p>
+      </div>
     );
   }
 
