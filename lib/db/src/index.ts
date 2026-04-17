@@ -12,9 +12,14 @@ if (!process.env.DATABASE_URL) {
 
 const connectionString = process.env.DATABASE_URL;
 
+// In serverless environments (Vercel, AWS Lambda) keep the pool small to avoid
+// exhausting Neon's connection limit — each function instance gets its own pool.
+const isServerless =
+  process.env.VERCEL === "1" || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
 export const pool = new Pool({
   connectionString,
-  max: 10,
+  max: isServerless ? 1 : 10,
 });
 export const db = drizzle(pool, { schema });
 
