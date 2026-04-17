@@ -2,11 +2,6 @@
   "buildCommand": "pnpm --filter @workspace/idea-journal run build",
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --frozen-lockfile",
-  "functions": {
-    "artifacts/idea-journal/api/**/*.ts": {
-      "runtime": "@vercel/node@5"
-    }
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/artifacts/idea-journal/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
