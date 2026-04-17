@@ -2,14 +2,9 @@
   "name": "planora-root",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
-    "@vercel/node": "^3.0.0",
     "drizzle-orm": "^0.45.1",
     "pg": "^8.11.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/pg": "^8.11.0",
-    "typescript": "^5.0.0"
   }
 }
