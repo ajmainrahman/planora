@@ -14,3 +14,158 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List ideas
+ */
+export const ListIdeasResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  status: zod.enum(["seed", "planning", "building", "shared"]),
+  priority: zod.enum(["low", "medium", "high"]),
+  category: zod.string(),
+  nextStep: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListIdeasResponse = zod.array(ListIdeasResponseItem);
+
+/**
+ * @summary Create an idea
+ */
+
+export const CreateIdeaBody = zod.object({
+  title: zod.string().min(1),
+  description: zod.string().min(1),
+  status: zod.enum(["seed", "planning", "building", "shared"]),
+  priority: zod.enum(["low", "medium", "high"]),
+  category: zod.string().min(1),
+  nextStep: zod.string().min(1),
+});
+
+/**
+ * @summary Get an idea
+ */
+export const GetIdeaParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetIdeaResponse = zod
+  .object({
+    id: zod.number(),
+    title: zod.string(),
+    description: zod.string(),
+    status: zod.enum(["seed", "planning", "building", "shared"]),
+    priority: zod.enum(["low", "medium", "high"]),
+    category: zod.string(),
+    nextStep: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      progressNotes: zod.array(
+        zod.object({
+          id: zod.number(),
+          ideaId: zod.number(),
+          content: zod.string(),
+          mood: zod.string(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Update an idea
+ */
+export const UpdateIdeaParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateIdeaBody = zod.object({
+  title: zod.string().min(1).optional(),
+  description: zod.string().min(1).optional(),
+  status: zod.enum(["seed", "planning", "building", "shared"]).optional(),
+  priority: zod.enum(["low", "medium", "high"]).optional(),
+  category: zod.string().min(1).optional(),
+  nextStep: zod.string().min(1).optional(),
+});
+
+export const UpdateIdeaResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  status: zod.enum(["seed", "planning", "building", "shared"]),
+  priority: zod.enum(["low", "medium", "high"]),
+  category: zod.string(),
+  nextStep: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete an idea
+ */
+export const DeleteIdeaParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List progress notes for an idea
+ */
+export const ListProgressNotesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListProgressNotesResponseItem = zod.object({
+  id: zod.number(),
+  ideaId: zod.number(),
+  content: zod.string(),
+  mood: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListProgressNotesResponse = zod.array(
+  ListProgressNotesResponseItem,
+);
+
+/**
+ * @summary Create a progress note
+ */
+export const CreateProgressNoteParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateProgressNoteBody = zod.object({
+  content: zod.string().min(1),
+  mood: zod.string().min(1),
+});
+
+/**
+ * @summary Get journal dashboard summary
+ */
+export const GetDashboardResponse = zod.object({
+  totalIdeas: zod.number(),
+  activeIdeas: zod.number(),
+  sharedIdeas: zod.number(),
+  progressNotes: zod.number(),
+  statusCounts: zod.array(
+    zod.object({
+      status: zod.enum(["seed", "planning", "building", "shared"]),
+      count: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary List recent journal activity
+ */
+export const ListActivityResponseItem = zod.object({
+  id: zod.string(),
+  type: zod.enum(["idea_created", "idea_updated", "progress_added"]),
+  title: zod.string(),
+  detail: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListActivityResponse = zod.array(ListActivityResponseItem);

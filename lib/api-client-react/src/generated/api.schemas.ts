@@ -8,3 +8,107 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type IdeaStatus = (typeof IdeaStatus)[keyof typeof IdeaStatus];
+
+export const IdeaStatus = {
+  seed: "seed",
+  planning: "planning",
+  building: "building",
+  shared: "shared",
+} as const;
+
+export type IdeaPriority = (typeof IdeaPriority)[keyof typeof IdeaPriority];
+
+export const IdeaPriority = {
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export interface Idea {
+  id: number;
+  title: string;
+  description: string;
+  status: IdeaStatus;
+  priority: IdeaPriority;
+  category: string;
+  nextStep: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProgressNote {
+  id: number;
+  ideaId: number;
+  content: string;
+  mood: string;
+  createdAt: string;
+}
+
+export type IdeaDetail = Idea & {
+  progressNotes: ProgressNote[];
+};
+
+export interface IdeaInput {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  description: string;
+  status: IdeaStatus;
+  priority: IdeaPriority;
+  /** @minLength 1 */
+  category: string;
+  /** @minLength 1 */
+  nextStep: string;
+}
+
+export interface IdeaUpdate {
+  /** @minLength 1 */
+  title?: string;
+  /** @minLength 1 */
+  description?: string;
+  status?: IdeaStatus;
+  priority?: IdeaPriority;
+  /** @minLength 1 */
+  category?: string;
+  /** @minLength 1 */
+  nextStep?: string;
+}
+
+export interface ProgressNoteInput {
+  /** @minLength 1 */
+  content: string;
+  /** @minLength 1 */
+  mood: string;
+}
+
+export interface StatusCount {
+  status: IdeaStatus;
+  count: number;
+}
+
+export interface DashboardSummary {
+  totalIdeas: number;
+  activeIdeas: number;
+  sharedIdeas: number;
+  progressNotes: number;
+  statusCounts: StatusCount[];
+}
+
+export type ActivityItemType =
+  (typeof ActivityItemType)[keyof typeof ActivityItemType];
+
+export const ActivityItemType = {
+  idea_created: "idea_created",
+  idea_updated: "idea_updated",
+  progress_added: "progress_added",
+} as const;
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityItemType;
+  title: string;
+  detail: string;
+  createdAt: string;
+}

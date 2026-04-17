@@ -5,18 +5,31 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ActivityItem,
+  DashboardSummary,
+  HealthStatus,
+  Idea,
+  IdeaDetail,
+  IdeaInput,
+  IdeaUpdate,
+  ProgressNote,
+  ProgressNoteInput,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +105,729 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List ideas
+ */
+export const getListIdeasUrl = () => {
+  return `/api/ideas`;
+};
+
+export const listIdeas = async (options?: RequestInit): Promise<Idea[]> => {
+  return customFetch<Idea[]>(getListIdeasUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListIdeasQueryKey = () => {
+  return [`/api/ideas`] as const;
+};
+
+export const getListIdeasQueryOptions = <
+  TData = Awaited<ReturnType<typeof listIdeas>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listIdeas>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListIdeasQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listIdeas>>> = ({
+    signal,
+  }) => listIdeas({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listIdeas>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListIdeasQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listIdeas>>
+>;
+export type ListIdeasQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List ideas
+ */
+
+export function useListIdeas<
+  TData = Awaited<ReturnType<typeof listIdeas>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listIdeas>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListIdeasQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create an idea
+ */
+export const getCreateIdeaUrl = () => {
+  return `/api/ideas`;
+};
+
+export const createIdea = async (
+  ideaInput: IdeaInput,
+  options?: RequestInit,
+): Promise<Idea> => {
+  return customFetch<Idea>(getCreateIdeaUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(ideaInput),
+  });
+};
+
+export const getCreateIdeaMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createIdea>>,
+    TError,
+    { data: BodyType<IdeaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createIdea>>,
+  TError,
+  { data: BodyType<IdeaInput> },
+  TContext
+> => {
+  const mutationKey = ["createIdea"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createIdea>>,
+    { data: BodyType<IdeaInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createIdea(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateIdeaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createIdea>>
+>;
+export type CreateIdeaMutationBody = BodyType<IdeaInput>;
+export type CreateIdeaMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create an idea
+ */
+export const useCreateIdea = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createIdea>>,
+    TError,
+    { data: BodyType<IdeaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createIdea>>,
+  TError,
+  { data: BodyType<IdeaInput> },
+  TContext
+> => {
+  return useMutation(getCreateIdeaMutationOptions(options));
+};
+
+/**
+ * @summary Get an idea
+ */
+export const getGetIdeaUrl = (id: number) => {
+  return `/api/ideas/${id}`;
+};
+
+export const getIdea = async (
+  id: number,
+  options?: RequestInit,
+): Promise<IdeaDetail> => {
+  return customFetch<IdeaDetail>(getGetIdeaUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetIdeaQueryKey = (id: number) => {
+  return [`/api/ideas/${id}`] as const;
+};
+
+export const getGetIdeaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getIdea>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getIdea>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetIdeaQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdea>>> = ({
+    signal,
+  }) => getIdea(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getIdea>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetIdeaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getIdea>>
+>;
+export type GetIdeaQueryError = ErrorType<void>;
+
+/**
+ * @summary Get an idea
+ */
+
+export function useGetIdea<
+  TData = Awaited<ReturnType<typeof getIdea>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getIdea>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIdeaQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update an idea
+ */
+export const getUpdateIdeaUrl = (id: number) => {
+  return `/api/ideas/${id}`;
+};
+
+export const updateIdea = async (
+  id: number,
+  ideaUpdate: IdeaUpdate,
+  options?: RequestInit,
+): Promise<Idea> => {
+  return customFetch<Idea>(getUpdateIdeaUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(ideaUpdate),
+  });
+};
+
+export const getUpdateIdeaMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateIdea>>,
+    TError,
+    { id: number; data: BodyType<IdeaUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateIdea>>,
+  TError,
+  { id: number; data: BodyType<IdeaUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateIdea"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateIdea>>,
+    { id: number; data: BodyType<IdeaUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateIdea(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateIdeaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateIdea>>
+>;
+export type UpdateIdeaMutationBody = BodyType<IdeaUpdate>;
+export type UpdateIdeaMutationError = ErrorType<void>;
+
+/**
+ * @summary Update an idea
+ */
+export const useUpdateIdea = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateIdea>>,
+    TError,
+    { id: number; data: BodyType<IdeaUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateIdea>>,
+  TError,
+  { id: number; data: BodyType<IdeaUpdate> },
+  TContext
+> => {
+  return useMutation(getUpdateIdeaMutationOptions(options));
+};
+
+/**
+ * @summary Delete an idea
+ */
+export const getDeleteIdeaUrl = (id: number) => {
+  return `/api/ideas/${id}`;
+};
+
+export const deleteIdea = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteIdeaUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteIdeaMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteIdea>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteIdea>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteIdea"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteIdea>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteIdea(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteIdeaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteIdea>>
+>;
+
+export type DeleteIdeaMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete an idea
+ */
+export const useDeleteIdea = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteIdea>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteIdea>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteIdeaMutationOptions(options));
+};
+
+/**
+ * @summary List progress notes for an idea
+ */
+export const getListProgressNotesUrl = (id: number) => {
+  return `/api/ideas/${id}/progress`;
+};
+
+export const listProgressNotes = async (
+  id: number,
+  options?: RequestInit,
+): Promise<ProgressNote[]> => {
+  return customFetch<ProgressNote[]>(getListProgressNotesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListProgressNotesQueryKey = (id: number) => {
+  return [`/api/ideas/${id}/progress`] as const;
+};
+
+export const getListProgressNotesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProgressNotes>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProgressNotes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProgressNotesQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listProgressNotes>>
+  > = ({ signal }) => listProgressNotes(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProgressNotes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListProgressNotesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listProgressNotes>>
+>;
+export type ListProgressNotesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List progress notes for an idea
+ */
+
+export function useListProgressNotes<
+  TData = Awaited<ReturnType<typeof listProgressNotes>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProgressNotes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListProgressNotesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a progress note
+ */
+export const getCreateProgressNoteUrl = (id: number) => {
+  return `/api/ideas/${id}/progress`;
+};
+
+export const createProgressNote = async (
+  id: number,
+  progressNoteInput: ProgressNoteInput,
+  options?: RequestInit,
+): Promise<ProgressNote> => {
+  return customFetch<ProgressNote>(getCreateProgressNoteUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(progressNoteInput),
+  });
+};
+
+export const getCreateProgressNoteMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createProgressNote>>,
+    TError,
+    { id: number; data: BodyType<ProgressNoteInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createProgressNote>>,
+  TError,
+  { id: number; data: BodyType<ProgressNoteInput> },
+  TContext
+> => {
+  const mutationKey = ["createProgressNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createProgressNote>>,
+    { id: number; data: BodyType<ProgressNoteInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createProgressNote(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateProgressNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createProgressNote>>
+>;
+export type CreateProgressNoteMutationBody = BodyType<ProgressNoteInput>;
+export type CreateProgressNoteMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a progress note
+ */
+export const useCreateProgressNote = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createProgressNote>>,
+    TError,
+    { id: number; data: BodyType<ProgressNoteInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createProgressNote>>,
+  TError,
+  { id: number; data: BodyType<ProgressNoteInput> },
+  TContext
+> => {
+  return useMutation(getCreateProgressNoteMutationOptions(options));
+};
+
+/**
+ * @summary Get journal dashboard summary
+ */
+export const getGetDashboardUrl = () => {
+  return `/api/dashboard`;
+};
+
+export const getDashboard = async (
+  options?: RequestInit,
+): Promise<DashboardSummary> => {
+  return customFetch<DashboardSummary>(getGetDashboardUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDashboardQueryKey = () => {
+  return [`/api/dashboard`] as const;
+};
+
+export const getGetDashboardQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDashboardQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboard>>> = ({
+    signal,
+  }) => getDashboard({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboard>>
+>;
+export type GetDashboardQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get journal dashboard summary
+ */
+
+export function useGetDashboard<
+  TData = Awaited<ReturnType<typeof getDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List recent journal activity
+ */
+export const getListActivityUrl = () => {
+  return `/api/activity`;
+};
+
+export const listActivity = async (
+  options?: RequestInit,
+): Promise<ActivityItem[]> => {
+  return customFetch<ActivityItem[]>(getListActivityUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListActivityQueryKey = () => {
+  return [`/api/activity`] as const;
+};
+
+export const getListActivityQueryOptions = <
+  TData = Awaited<ReturnType<typeof listActivity>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listActivity>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListActivityQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listActivity>>> = ({
+    signal,
+  }) => listActivity({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listActivity>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListActivityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listActivity>>
+>;
+export type ListActivityQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List recent journal activity
+ */
+
+export function useListActivity<
+  TData = Awaited<ReturnType<typeof listActivity>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listActivity>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListActivityQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

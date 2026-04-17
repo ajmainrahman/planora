@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: ideas
+    description: Idea journal operations
+  - name: progress
+    description: Progress note operations
+  - name: dashboard
+    description: Journal overview operations
 paths:
   /healthz:
     get:
@@ -24,7 +29,156 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /ideas:
+    get:
+      operationId: listIdeas
+      tags: [ideas]
+      summary: List ideas
+      responses:
+        "200":
+          description: Ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Idea"
+    post:
+      operationId: createIdea
+      tags: [ideas]
+      summary: Create an idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdeaInput"
+      responses:
+        "201":
+          description: Created idea
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Idea"
+  /ideas/{id}:
+    get:
+      operationId: getIdea
+      tags: [ideas]
+      summary: Get an idea
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Idea
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdeaDetail"
+        "404":
+          description: Idea not found
+    patch:
+      operationId: updateIdea
+      tags: [ideas]
+      summary: Update an idea
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdeaUpdate"
+      responses:
+        "200":
+          description: Updated idea
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Idea"
+        "404":
+          description: Idea not found
+    delete:
+      operationId: deleteIdea
+      tags: [ideas]
+      summary: Delete an idea
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Idea not found
+  /ideas/{id}/progress:
+    get:
+      operationId: listProgressNotes
+      tags: [progress]
+      summary: List progress notes for an idea
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Progress notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgressNote"
+    post:
+      operationId: createProgressNote
+      tags: [progress]
+      summary: Create a progress note
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressNoteInput"
+      responses:
+        "201":
+          description: Created progress note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressNote"
+        "404":
+          description: Idea not found
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get journal dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: List recent journal activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
 components:
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +187,193 @@ components:
           type: string
       required:
         - status
-
+    IdeaStatus:
+      type: string
+      enum:
+        - seed
+        - planning
+        - building
+        - shared
+    IdeaPriority:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+    Idea:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/IdeaStatus"
+        priority:
+          $ref: "#/components/schemas/IdeaPriority"
+        category:
+          type: string
+        nextStep:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - status
+        - priority
+        - category
+        - nextStep
+        - createdAt
+        - updatedAt
+    IdeaDetail:
+      allOf:
+        - $ref: "#/components/schemas/Idea"
+        - type: object
+          properties:
+            progressNotes:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProgressNote"
+          required:
+            - progressNotes
+    IdeaInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
+        status:
+          $ref: "#/components/schemas/IdeaStatus"
+        priority:
+          $ref: "#/components/schemas/IdeaPriority"
+        category:
+          type: string
+          minLength: 1
+        nextStep:
+          type: string
+          minLength: 1
+      required:
+        - title
+        - description
+        - status
+        - priority
+        - category
+        - nextStep
+    IdeaUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
+        status:
+          $ref: "#/components/schemas/IdeaStatus"
+        priority:
+          $ref: "#/components/schemas/IdeaPriority"
+        category:
+          type: string
+          minLength: 1
+        nextStep:
+          type: string
+          minLength: 1
+      minProperties: 1
+    ProgressNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        ideaId:
+          type: integer
+        content:
+          type: string
+        mood:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - ideaId
+        - content
+        - mood
+        - createdAt
+    ProgressNoteInput:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+        mood:
+          type: string
+          minLength: 1
+      required:
+        - content
+        - mood
+    StatusCount:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/IdeaStatus"
+        count:
+          type: integer
+      required:
+        - status
+        - count
+    DashboardSummary:
+      type: object
+      properties:
+        totalIdeas:
+          type: integer
+        activeIdeas:
+          type: integer
+        sharedIdeas:
+          type: integer
+        progressNotes:
+          type: integer
+        statusCounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+      required:
+        - totalIdeas
+        - activeIdeas
+        - sharedIdeas
+        - progressNotes
+        - statusCounts
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - idea_created
+            - idea_updated
+            - progress_added
+        title:
+          type: string
+        detail:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - title
+        - detail
+        - createdAt

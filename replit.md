@@ -16,6 +16,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Apps
+
+- **Idea Journal** (`artifacts/idea-journal`) — React/Vite web app at `/` for planning ideas, tracking statuses, and writing progress notes.
+- **API Server** (`artifacts/api-server`) — shared Express API mounted at `/api`.
+
+## Idea Journal Data Model
+
+- `ideas` — idea cards with title, description, status (`seed`, `planning`, `building`, `shared`), priority, category, next step, and timestamps.
+- `progress_notes` — journal-style updates connected to ideas.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
@@ -23,5 +33,6 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
+- `pnpm --filter @workspace/idea-journal run dev` — run Idea Journal locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
