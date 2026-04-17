@@ -9,8 +9,6 @@
     { "src": "/api/ideas/([^/]+)/progress", "dest": "/api/ideas/[id]/progress.js" },
     { "src": "/api/ideas/([^/]+)", "dest": "/api/ideas/[id].js" },
     { "src": "/api/ideas", "dest": "/api/ideas.js" },
-    { "src": "/favicon.svg", "dest": "/favicon.svg" },
-    { "src": "^/assets/(.*)", "dest": "/assets/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
