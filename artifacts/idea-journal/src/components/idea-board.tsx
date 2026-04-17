@@ -1,13 +1,15 @@
 import { useMemo, useState } from "react";
 import { useListIdeas, getListIdeasQueryKey } from "@workspace/api-client-react";
 import { IdeaCard } from "@/components/idea-card";
+import { IdeaFeedCard } from "@/components/idea-feed-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, X } from "lucide-react";
+import { Search, Star, X, LayoutGrid, List, Bookmark } from "lucide-react";
 import type { Idea } from "@workspace/api-client-react";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 
 const statusLanes = [
   { value: "seed", label: "Seed" },
@@ -16,14 +18,19 @@ const statusLanes = [
   { value: "shared", label: "Shared" },
 ] as const;
 
+type ViewMode = "board" | "feed";
+
 export function IdeaBoard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [highPriorityOnly, setHighPriorityOnly] = useState(false);
+  const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("feed");
   const { data: ideas, isLoading } = useListIdeas({
     query: { queryKey: getListIdeasQueryKey() }
   });
+  const { isBookmarked } = useBookmarks();
 
   const categories = useMemo(() => {
     const unique = new Set((ideas ?? []).map((idea) => idea.category).filter(Boolean));
@@ -43,22 +50,25 @@ export function IdeaBoard() {
       const matchesStatus = statusFilter === "all" || idea.status === statusFilter;
       const matchesCategory = categoryFilter === "all" || idea.category === categoryFilter;
       const matchesPriority = !highPriorityOnly || idea.priority === "high";
+      const matchesBookmark = !bookmarkedOnly || isBookmarked(idea.id);
 
-      return matchesSearch && matchesStatus && matchesCategory && matchesPriority;
+      return matchesSearch && matchesStatus && matchesCategory && matchesPriority && matchesBookmark;
     });
-  }, [categoryFilter, highPriorityOnly, ideas, search, statusFilter]);
+  }, [categoryFilter, highPriorityOnly, bookmarkedOnly, ideas, search, statusFilter, isBookmarked]);
 
   const activeFilters =
     search.trim() !== "" ||
     statusFilter !== "all" ||
     categoryFilter !== "all" ||
-    highPriorityOnly;
+    highPriorityOnly ||
+    bookmarkedOnly;
 
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("all");
     setCategoryFilter("all");
     setHighPriorityOnly(false);
+    setBookmarkedOnly(false);
   };
 
   const ideasByStatus = statusLanes.map((lane) => ({
@@ -68,8 +78,8 @@ export function IdeaBoard() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-36 rounded-2xl" />)}
       </div>
     );
   }
@@ -122,6 +132,16 @@ export function IdeaBoard() {
               <Star className="h-3.5 w-3.5" />
               High Priority
             </Button>
+            <Button
+              type="button"
+              variant={bookmarkedOnly ? "default" : "outline"}
+              size="sm"
+              className="rounded-full gap-2"
+              onClick={() => setBookmarkedOnly((value) => !value)}
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              Saved
+            </Button>
           </div>
         </div>
 
@@ -145,6 +165,25 @@ export function IdeaBoard() {
               Clear filters
             </Button>
           ) : null}
+
+          <div className="ml-auto flex items-center gap-1 rounded-full border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("feed")}
+              className={`rounded-full p-1.5 transition-colors ${viewMode === "feed" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="Feed view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("board")}
+              className={`rounded-full p-1.5 transition-colors ${viewMode === "board" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="Board view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -155,6 +194,12 @@ export function IdeaBoard() {
           <Button type="button" variant="outline" className="mt-5 rounded-full" onClick={clearFilters}>
             Show all ideas
           </Button>
+        </div>
+      ) : viewMode === "feed" ? (
+        <div className="max-w-2xl mx-auto space-y-4">
+          {filteredIdeas.map((idea: Idea) => (
+            <IdeaFeedCard key={idea.id} idea={idea} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">

@@ -6,27 +6,27 @@ import { CreateIdeaDialog } from "@/components/create-idea-dialog";
 export default function Home() {
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-12">
-        <section className="flex flex-col md:flex-row gap-8 items-start justify-between">
+      <div className="max-w-6xl mx-auto space-y-10">
+        <section className="flex flex-col md:flex-row gap-6 items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-4xl font-serif font-medium tracking-tight text-foreground">
               Planora
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl">
-              Capture ideas, shape them into plans, and keep a clear journal of every step forward.
+            <p className="text-base text-muted-foreground max-w-lg leading-relaxed">
+              A quiet place to capture ideas, watch them grow, and share what matters.
             </p>
           </div>
-          <CreateIdeaDialog />
+          <div className="flex-shrink-0">
+            <CreateIdeaDialog />
+          </div>
         </section>
 
         <DashboardStats />
 
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-serif font-medium text-foreground">Planning Board</h2>
-              <p className="text-sm text-muted-foreground">Search, filter, and follow ideas as they move from seed to shared.</p>
-            </div>
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-2xl font-serif font-medium text-foreground">Your Ideas</h2>
+            <p className="text-sm text-muted-foreground mt-1">Browse by feed or board, filter by status, category, or priority.</p>
           </div>
           <IdeaBoard />
         </div>

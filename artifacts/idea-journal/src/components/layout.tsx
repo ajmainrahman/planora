@@ -1,6 +1,11 @@
 import { Link } from "wouter";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { theme, toggle } = useTheme();
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-30 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -18,9 +23,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="hidden text-xs font-medium text-muted-foreground sm:block">Ideas into motion</span>
             </div>
           </Link>
-          
-          <div className="hidden rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm sm:block">
-            Plan. Journal. Share.
+
+          <div className="flex items-center gap-3">
+            <div className="hidden rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm sm:block">
+              Plan. Journal. Share.
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              aria-label="Toggle dark mode"
+              className="rounded-full"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
       </header>

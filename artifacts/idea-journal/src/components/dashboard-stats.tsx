@@ -20,29 +20,29 @@ export function DashboardStats() {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <StatCard 
-        title="Total Ideas" 
-        value={dashboard.totalIdeas} 
-        icon={Lightbulb} 
-        colorClass="text-amber-600 bg-amber-100 dark:bg-amber-900/20" 
+      <StatCard
+        title="Total Ideas"
+        value={dashboard.totalIdeas}
+        icon={Lightbulb}
+        colorClass="text-sky-600 bg-sky-100 dark:bg-sky-900/20 dark:text-sky-400"
       />
-      <StatCard 
-        title="Active Projects" 
-        value={dashboard.activeIdeas} 
-        icon={Rocket} 
-        colorClass="text-primary bg-primary/10" 
+      <StatCard
+        title="Active Projects"
+        value={dashboard.activeIdeas}
+        icon={Rocket}
+        colorClass="text-primary bg-primary/10"
       />
-      <StatCard 
-        title="Shared Works" 
-        value={dashboard.sharedIdeas} 
-        icon={Share2} 
-        colorClass="text-emerald-600 bg-emerald-100 dark:bg-emerald-900/20" 
+      <StatCard
+        title="Shared Works"
+        value={dashboard.sharedIdeas}
+        icon={Share2}
+        colorClass="text-violet-600 bg-violet-100 dark:bg-violet-900/20 dark:text-violet-400"
       />
-      <StatCard 
-        title="Journal Entries" 
-        value={dashboard.progressNotes} 
-        icon={PenTool} 
-        colorClass="text-blue-600 bg-blue-100 dark:bg-blue-900/20" 
+      <StatCard
+        title="Journal Entries"
+        value={dashboard.progressNotes}
+        icon={PenTool}
+        colorClass="text-emerald-600 bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
       />
     </div>
   );
@@ -50,7 +50,7 @@ export function DashboardStats() {
 
 function StatCard({ title, value, icon: Icon, colorClass }: { title: string, value: number, icon: any, colorClass: string }) {
   return (
-    <Card className="border-border/50 shadow-sm hover-elevate transition-all duration-300 rounded-2xl overflow-hidden group">
+    <Card className="border-border/60 shadow-sm hover-elevate transition-all duration-300 rounded-2xl overflow-hidden group">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4">
           <div className={`p-3 w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${colorClass}`}>
