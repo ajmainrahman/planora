@@ -17,15 +17,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          ),
-        ]
-      : []),
   ],
   resolve: {
     alias: {
