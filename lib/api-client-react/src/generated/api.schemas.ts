@@ -34,6 +34,8 @@ export interface Idea {
   priority: IdeaPriority;
   category: string;
   nextStep: string;
+  dueDate: string | null;
+  reminderAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -61,6 +63,8 @@ export interface IdeaInput {
   category: string;
   /** @minLength 1 */
   nextStep: string;
+  dueDate?: string | null;
+  reminderAt?: string | null;
 }
 
 export interface IdeaUpdate {
@@ -74,6 +78,8 @@ export interface IdeaUpdate {
   category?: string;
   /** @minLength 1 */
   nextStep?: string;
+  dueDate?: string | null;
+  reminderAt?: string | null;
 }
 
 export interface ProgressNoteInput {

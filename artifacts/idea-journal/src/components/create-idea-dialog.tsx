@@ -29,6 +29,8 @@ const ideaSchema = z.object({
   priority: z.enum([IdeaPriority.low, IdeaPriority.medium, IdeaPriority.high]),
   category: z.string().min(1, "Category is required"),
   nextStep: z.string().min(1, "Next step is required"),
+  dueDate: z.string().optional(),
+  reminderAt: z.string().optional(),
 });
 
 export function CreateIdeaDialog() {
@@ -48,11 +50,19 @@ export function CreateIdeaDialog() {
       priority: IdeaPriority.medium,
       category: "General",
       nextStep: "Brainstorming",
+      dueDate: "",
+      reminderAt: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof ideaSchema>) => {
-    createIdea.mutate({ data: values }, {
+    createIdea.mutate({
+      data: {
+        ...values,
+        dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : null,
+        reminderAt: values.reminderAt ? new Date(values.reminderAt).toISOString() : null,
+      },
+    }, {
       onSuccess: (newIdea) => {
         queryClient.invalidateQueries({ queryKey: getListIdeasQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
@@ -192,6 +202,36 @@ export function CreateIdeaDialog() {
                     <FormLabel>Immediate Next Step</FormLabel>
                     <FormControl>
                       <Input placeholder="What's next?" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reminderAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reminder</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

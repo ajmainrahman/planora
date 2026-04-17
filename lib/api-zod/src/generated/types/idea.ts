@@ -16,6 +16,8 @@ export interface Idea {
   priority: IdeaPriority;
   category: string;
   nextStep: string;
+  dueDate: Date | null;
+  reminderAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

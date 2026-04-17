@@ -36,6 +36,8 @@ const toIdeaResponse = (idea: Idea) => ({
   priority: idea.priority,
   category: idea.category,
   nextStep: idea.nextStep,
+  dueDate: idea.dueDate,
+  reminderAt: idea.reminderAt,
   createdAt: idea.createdAt,
   updatedAt: idea.updatedAt,
 });
@@ -66,6 +68,8 @@ async function seedDataIfEmpty(): Promise<void> {
         priority: "high",
         category: "Personal system",
         nextStep: "Write the first weekly review and pick one idea to prototype.",
+        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+        reminderAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       },
       {
         title: "Publish tiny progress notes",
@@ -75,6 +79,8 @@ async function seedDataIfEmpty(): Promise<void> {
         priority: "medium",
         category: "Sharing",
         nextStep: "Draft three update formats and choose the easiest one to keep using.",
+        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21),
+        reminderAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
       },
       {
         title: "Collect rough product thoughts",
@@ -84,6 +90,8 @@ async function seedDataIfEmpty(): Promise<void> {
         priority: "low",
         category: "Ideas",
         nextStep: "Add five raw notes from recent conversations.",
+        dueDate: null,
+        reminderAt: null,
       },
     ])
     .returning();

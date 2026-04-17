@@ -19,4 +19,6 @@ export interface IdeaUpdate {
   category?: string;
   /** @minLength 1 */
   nextStep?: string;
+  dueDate?: Date | null;
+  reminderAt?: Date | null;
 }

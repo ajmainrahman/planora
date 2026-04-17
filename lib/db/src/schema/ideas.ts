@@ -23,6 +23,8 @@ export const ideasTable = pgTable("ideas", {
   priority: ideaPriorityEnum("priority").notNull().default("medium"),
   category: text("category").notNull(),
   nextStep: text("next_step").notNull(),
+  dueDate: timestamp("due_date", { withTimezone: true }),
+  reminderAt: timestamp("reminder_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

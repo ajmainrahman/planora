@@ -3,7 +3,7 @@ import type { Idea } from "@workspace/api-client-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronRight, Target } from "lucide-react";
+import { Bell, CalendarClock, ChevronRight, Target } from "lucide-react";
 
 export function IdeaCard({ idea, compact = false }: { idea: Idea; compact?: boolean }) {
   const statusColors = {
@@ -46,6 +46,23 @@ export function IdeaCard({ idea, compact = false }: { idea: Idea; compact?: bool
             <div className="mt-auto pt-4 flex items-start gap-2 text-sm">
               <Target className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <span className="text-foreground/80 line-clamp-2 italic">"{idea.nextStep}"</span>
+            </div>
+          )}
+
+          {(idea.dueDate || idea.reminderAt) && (
+            <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted-foreground">
+              {idea.dueDate ? (
+                <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Due {formatDistanceToNow(new Date(idea.dueDate), { addSuffix: true })}
+                </span>
+              ) : null}
+              {idea.reminderAt ? (
+                <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1">
+                  <Bell className="h-3.5 w-3.5" />
+                  Reminder {formatDistanceToNow(new Date(idea.reminderAt), { addSuffix: true })}
+                </span>
+              ) : null}
             </div>
           )}
         </CardContent>

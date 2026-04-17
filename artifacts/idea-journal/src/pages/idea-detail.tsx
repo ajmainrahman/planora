@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProgressTimeline } from "@/components/progress-timeline";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Trash2, Save, Calendar, Tag, Target } from "lucide-react";
+import { ArrowLeft, Trash2, Save, Calendar, Tag, Target, Bell } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -43,6 +43,8 @@ export default function IdeaDetail() {
   const [priority, setPriority] = useState<IdeaPriority>(IdeaPriority.medium);
   const [category, setCategory] = useState("");
   const [nextStep, setNextStep] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [reminderAt, setReminderAt] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
   const initializedForId = useRef<number | null>(null);
@@ -56,6 +58,16 @@ export default function IdeaDetail() {
       setPriority(idea.priority as IdeaPriority);
       setCategory(idea.category);
       setNextStep(idea.nextStep);
+      setDueDate(
+        idea.dueDate
+          ? format(new Date(idea.dueDate), "yyyy-MM-dd'T'HH:mm")
+          : "",
+      );
+      setReminderAt(
+        idea.reminderAt
+          ? format(new Date(idea.reminderAt), "yyyy-MM-dd'T'HH:mm")
+          : "",
+      );
     }
   }, [idea]);
 
@@ -63,7 +75,16 @@ export default function IdeaDetail() {
     updateIdea.mutate(
       { 
         id: ideaId, 
-        data: { title, description, status, priority, category, nextStep } 
+        data: {
+          title,
+          description,
+          status,
+          priority,
+          category,
+          nextStep,
+          dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+          reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
+        },
       },
       {
         onSuccess: (updatedData) => {
@@ -233,6 +254,38 @@ export default function IdeaDetail() {
                   </span>
                   <span className="capitalize px-2.5 py-0.5 border rounded-full text-xs font-medium">
                     Priority: {priority}
+                  </span>
+                </div>
+              )}
+
+              <div className="w-px h-4 bg-border hidden sm:block"></div>
+
+              {isEditing ? (
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <Input
+                    type="datetime-local"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="h-8 w-48"
+                  />
+                  <Input
+                    type="datetime-local"
+                    value={reminderAt}
+                    onChange={(e) => setReminderAt(e.target.value)}
+                    className="h-8 w-48"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {idea.dueDate ? `Due ${format(new Date(idea.dueDate), "MMM d, yyyy h:mm a")}` : "No due date"}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Bell className="w-4 h-4" />
+                    {idea.reminderAt
+                      ? `Remind ${format(new Date(idea.reminderAt), "MMM d, yyyy h:mm a")}`
+                      : "No reminder"}
                   </span>
                 </div>
               )}

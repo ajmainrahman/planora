@@ -26,6 +26,8 @@ export const ListIdeasResponseItem = zod.object({
   priority: zod.enum(["low", "medium", "high"]),
   category: zod.string(),
   nextStep: zod.string(),
+  dueDate: zod.coerce.date().nullable(),
+  reminderAt: zod.coerce.date().nullable(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -42,6 +44,8 @@ export const CreateIdeaBody = zod.object({
   priority: zod.enum(["low", "medium", "high"]),
   category: zod.string().min(1),
   nextStep: zod.string().min(1),
+  dueDate: zod.coerce.date().nullable().optional(),
+  reminderAt: zod.coerce.date().nullable().optional(),
 });
 
 /**
@@ -60,6 +64,8 @@ export const GetIdeaResponse = zod
     priority: zod.enum(["low", "medium", "high"]),
     category: zod.string(),
     nextStep: zod.string(),
+    dueDate: zod.coerce.date().nullable(),
+    reminderAt: zod.coerce.date().nullable(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -91,6 +97,8 @@ export const UpdateIdeaBody = zod.object({
   priority: zod.enum(["low", "medium", "high"]).optional(),
   category: zod.string().min(1).optional(),
   nextStep: zod.string().min(1).optional(),
+  dueDate: zod.coerce.date().nullable().optional(),
+  reminderAt: zod.coerce.date().nullable().optional(),
 });
 
 export const UpdateIdeaResponse = zod.object({
@@ -101,6 +109,8 @@ export const UpdateIdeaResponse = zod.object({
   priority: zod.enum(["low", "medium", "high"]),
   category: zod.string(),
   nextStep: zod.string(),
+  dueDate: zod.coerce.date().nullable(),
+  reminderAt: zod.coerce.date().nullable(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
