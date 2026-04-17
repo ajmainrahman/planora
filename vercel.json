@@ -3,11 +3,6 @@
   "buildCommand": "pnpm --filter @workspace/idea-journal run build",
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
