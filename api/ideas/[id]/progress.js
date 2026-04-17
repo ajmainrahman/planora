@@ -25,8 +25,10 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
+
   const id = parseInt(req.query.id);
   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
   try {
     if (req.method === "GET") {
       const notes = await db.select().from(progressNotesTable).where(eq(progressNotesTable.ideaId, id));
