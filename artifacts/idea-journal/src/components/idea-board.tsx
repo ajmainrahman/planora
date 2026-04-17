@@ -38,7 +38,6 @@ export function IdeaBoard() {
 
   const filteredIdeas = useMemo(() => {
     const query = search.trim().toLowerCase();
-
     return (ideas ?? []).filter((idea) => {
       const matchesSearch =
         !query ||
@@ -50,7 +49,6 @@ export function IdeaBoard() {
       const matchesCategory = categoryFilter === "all" || idea.category === categoryFilter;
       const matchesPriority = !highPriorityOnly || idea.priority === "high";
       const matchesBookmark = !bookmarkedOnly || isBookmarked(idea.id);
-
       return matchesSearch && matchesStatus && matchesCategory && matchesPriority && matchesBookmark;
     });
   }, [categoryFilter, highPriorityOnly, bookmarkedOnly, ideas, search, statusFilter, isBookmarked]);
@@ -107,7 +105,6 @@ export function IdeaBoard() {
               type="search"
             />
           </div>
-
           <div className="flex flex-wrap items-center gap-2">
             {statusLanes.map((lane) => (
               <Button
@@ -143,7 +140,6 @@ export function IdeaBoard() {
             </Button>
           </div>
         </div>
-
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Badge variant={categoryFilter === "all" ? "default" : "outline"} className="cursor-pointer rounded-full" onClick={() => setCategoryFilter("all")}>
             All Categories
@@ -164,7 +160,6 @@ export function IdeaBoard() {
               Clear filters
             </Button>
           ) : null}
-
           <div className="ml-auto flex items-center gap-1 rounded-full border bg-muted/40 p-1">
             <button
               type="button"
