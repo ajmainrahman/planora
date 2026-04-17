@@ -3,7 +3,6 @@
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --frozen-lockfile",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/artifacts/idea-journal/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
