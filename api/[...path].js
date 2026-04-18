@@ -33,6 +33,12 @@ function toIdea(r) {
   return { id: r.id, title: r.title, description: r.description, status: r.status, priority: r.priority, category: r.category, nextStep: r.nextStep, dueDate: r.dueDate, reminderAt: r.reminderAt, createdAt: r.createdAt, updatedAt: r.updatedAt };
 }
 
+function getBaseUrl(req) {
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
@@ -43,6 +49,36 @@ export default async function handler(req, res) {
   const parts = url.split("/").filter(Boolean);
 
   try {
+    // GET /api/share — public portfolio
+    if (req.method === "GET" && parts[1] === "share" && parts.length === 2) {
+      const ideas = await db.select().from(ideasTable).where(eq(ideasTable.status, "shared")).orderBy(desc(ideasTable.updatedAt));
+      const baseUrl = getBaseUrl(req);
+      const sharedIdeas = await Promise.all(ideas.map(async (idea) => {
+        const notes = await db.select().from(progressNotesTable).where(eq(progressNotesTable.ideaId, idea.id));
+        return { ...toIdea(idea), shareUrl: `${baseUrl}/share/${idea.id}`, progressNotes: notes };
+      }));
+      const total = sharedIdeas.length;
+      return res.status(200).json({
+        title: "My Idea Portfolio",
+        description: "A collection of ideas I've been building and sharing.",
+        sharedIdeas,
+        stats: [
+          { label: "Shared Ideas", value: total, unit: "ideas" },
+          { label: "Progress Notes", value: sharedIdeas.reduce((a, i) => a + i.progressNotes.length, 0), unit: "entries" },
+        ],
+      });
+    }
+
+    // GET /api/share/:id — public idea
+    if (req.method === "GET" && parts[1] === "share" && parts.length === 3) {
+      const id = parseInt(parts[2]);
+      const [idea] = await db.select().from(ideasTable).where(eq(ideasTable.id, id));
+      if (!idea || idea.status !== "shared") return res.status(404).json({ error: "Idea not found or not public" });
+      const notes = await db.select().from(progressNotesTable).where(eq(progressNotesTable.ideaId, id));
+      const baseUrl = getBaseUrl(req);
+      return res.status(200).json({ ...toIdea(idea), shareUrl: `${baseUrl}/share/${id}`, progressNotes: notes });
+    }
+
     // GET /api/ideas
     if (req.method === "GET" && parts.length === 2 && parts[1] === "ideas") {
       const ideas = await db.select().from(ideasTable).orderBy(desc(ideasTable.updatedAt));
@@ -66,7 +102,14 @@ export default async function handler(req, res) {
     if (req.method === "PATCH" && parts.length === 3 && parts[1] === "ideas") {
       const id = parseInt(parts[2]);
       const b = req.body;
-      const [idea] = await db.update(ideasTable).set({ ...b.title && { title: b.title }, ...b.description && { description: b.description }, ...b.status && { status: b.status }, ...b.priority && { priority: b.priority }, ...b.category && { category: b.category }, ...b.nextStep && { nextStep: b.nextStep }, updatedAt: new Date() }).where(eq(ideasTable.id, id)).returning();
+      const updateData = { updatedAt: new Date() };
+      if (b.title) updateData.title = b.title;
+      if (b.description) updateData.description = b.description;
+      if (b.status) updateData.status = b.status;
+      if (b.priority) updateData.priority = b.priority;
+      if (b.category) updateData.category = b.category;
+      if (b.nextStep) updateData.nextStep = b.nextStep;
+      const [idea] = await db.update(ideasTable).set(updateData).where(eq(ideasTable.id, id)).returning();
       if (!idea) return res.status(404).json({ error: "Not found" });
       return res.status(200).json(toIdea(idea));
     }
