@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid } from "lucide-react";
+import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { SearchDialog } from "@/components/search-dialog";
+import { PlanoraLogo } from "@/components/planora-logo";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const [location] = useLocation();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -23,7 +26,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const navItems = [
-    { href: "/", label: "Board", icon: LayoutGrid },
+    { href: "/dashboard", label: "Board", icon: LayoutGrid },
     { href: "/calendar", label: "Calendar", icon: CalendarDays },
     { href: "/weekly-review", label: "Weekly", icon: BookText },
   ];
@@ -34,13 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-3 group transition-opacity hover:opacity-80 shrink-0">
-              <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground shadow-sm flex items-center justify-center">
-                <svg viewBox="0 0 36 36" className="h-6 w-6" aria-hidden="true">
-                  <path d="M10 27V9h10.2c4.1 0 7 2.7 7 6.6 0 3.8-2.9 6.5-7 6.5h-5.1V27H10Z" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round" />
-                  <path d="M15.1 14.3h4.7c1.2 0 2 .6 2 1.5s-.8 1.5-2 1.5h-4.7v-3Z" fill="currentColor" />
-                  <circle cx="26" cy="26" r="2.2" fill="currentColor" />
-                </svg>
-              </div>
+              <PlanoraLogo size={36} />
               <span className="font-serif text-xl font-medium tracking-tight text-foreground">Planora</span>
             </Link>
 
@@ -92,6 +89,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">{user.name.split(" ")[0]}</span>
+              </Button>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,5 @@
-import { getAuth } from "@clerk/express";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
-import { Router, type IRouter, type NextFunction, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import {
   CreateIdeaBody,
   CreateProgressNoteBody,
@@ -31,25 +30,13 @@ import {
   type ProgressNote,
   progressNotesTable,
 } from "@workspace/db";
+import { requireAuth } from "../middlewares/authMiddleware.js";
 
 const router: IRouter = Router();
 const statuses = ["seed", "planning", "building", "shared"] as const;
 const seedDataPromises = new Map<string, Promise<void>>();
 
-type AuthenticatedRequest = Request & { userId: string };
-
-const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  const auth = getAuth(req);
-  const userId = auth.userId ?? (auth.sessionClaims as { userId?: string } | undefined)?.userId;
-
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  (req as AuthenticatedRequest).userId = userId;
-  next();
-};
+const getUserId = (req: Request) => String(req.sessionUser!.userId);
 
 const toIdeaResponse = (idea: Idea) => ({
   id: idea.id,
@@ -419,7 +406,7 @@ router.get("/share/:id", async (req, res): Promise<void> => {
 router.use(requireAuth);
 
 router.get("/ideas", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const ideas = await db
     .select()
@@ -430,7 +417,7 @@ router.get("/ideas", async (req, res): Promise<void> => {
 });
 
 router.post("/ideas", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   const parsed = CreateIdeaBody.safeParse(req.body);
 
   if (!parsed.success) {
@@ -450,7 +437,7 @@ router.post("/ideas", async (req, res): Promise<void> => {
 });
 
 router.get("/ideas/:id", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const params = GetIdeaParams.safeParse(req.params);
 
@@ -484,7 +471,7 @@ router.get("/ideas/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/ideas/:id", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   const params = UpdateIdeaParams.safeParse(req.params);
   const body = UpdateIdeaBody.safeParse(req.body);
 
@@ -519,7 +506,7 @@ router.patch("/ideas/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/ideas/:id", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   const params = DeleteIdeaParams.safeParse(req.params);
 
   if (!params.success) {
@@ -541,7 +528,7 @@ router.delete("/ideas/:id", async (req, res): Promise<void> => {
 });
 
 router.get("/ideas/:id/progress", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const params = ListProgressNotesParams.safeParse(req.params);
 
@@ -570,7 +557,7 @@ router.get("/ideas/:id/progress", async (req, res): Promise<void> => {
 });
 
 router.post("/ideas/:id/progress", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   const params = CreateProgressNoteParams.safeParse(req.params);
   const body = CreateProgressNoteBody.safeParse(req.body);
 
@@ -614,7 +601,7 @@ router.post("/ideas/:id/progress", async (req, res): Promise<void> => {
 });
 
 router.get("/dashboard", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
   const notes = await db
@@ -644,7 +631,7 @@ router.get("/dashboard", async (req, res): Promise<void> => {
 });
 
 router.get("/activity", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
   const notes = await db
@@ -692,7 +679,7 @@ router.get("/activity", async (req, res): Promise<void> => {
 });
 
 router.get("/progress-summary", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
   const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
   const notes = await getUserProgressNotes(userId);
@@ -731,7 +718,7 @@ router.get("/progress-summary", async (req, res): Promise<void> => {
 });
 
 router.get("/search", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
 
   if (!q) {
@@ -794,7 +781,7 @@ router.get("/search", async (req, res): Promise<void> => {
 });
 
 router.get("/calendar", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
 
   const monthParam = typeof req.query.month === "string" ? req.query.month : null;
@@ -884,7 +871,7 @@ router.get("/calendar", async (req, res): Promise<void> => {
 });
 
 router.get("/weekly-review", async (req, res): Promise<void> => {
-  const userId = (req as AuthenticatedRequest).userId;
+  const userId = getUserId(req);
   await ensureSeedData(userId);
 
   const weekParam = typeof req.query.week === "string" ? req.query.week : null;
