@@ -7,6 +7,8 @@ import Home from "@/pages/home";
 import IdeaDetail from "@/pages/idea-detail";
 import PublicPortfolio from "@/pages/public-portfolio";
 import PublicIdea from "@/pages/public-idea";
+import CalendarPage from "@/pages/calendar";
+import WeeklyReviewPage from "@/pages/weekly-review";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +24,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/ideas/:id" component={IdeaDetail} />
+      <Route path="/calendar" component={CalendarPage} />
+      <Route path="/weekly-review" component={WeeklyReviewPage} />
       <Route path="/share" component={PublicPortfolio} />
       <Route path="/share/:id" component={PublicIdea} />
       <Route component={NotFound} />

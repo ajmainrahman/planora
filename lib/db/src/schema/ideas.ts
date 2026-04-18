@@ -1,5 +1,5 @@
 import { createInsertSchema } from "drizzle-zod";
-import { pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
 
 export const ideaStatusEnum = pgEnum("idea_status", [
@@ -26,6 +26,8 @@ export const ideasTable = pgTable("ideas", {
   nextStep: text("next_step").notNull(),
   dueDate: timestamp("due_date", { withTimezone: true }),
   reminderAt: timestamp("reminder_at", { withTimezone: true }),
+  recurrenceType: text("recurrence_type"),
+  recurrenceInterval: integer("recurrence_interval"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

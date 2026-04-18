@@ -11,5 +11,6 @@ export interface ProgressNote {
   ideaId: number;
   content: string;
   mood: string;
+  tags: string[];
   createdAt: Date;
 }

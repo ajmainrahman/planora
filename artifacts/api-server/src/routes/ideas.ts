@@ -1,11 +1,12 @@
 import { getAuth } from "@clerk/express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { Router, type IRouter, type NextFunction, type Request, type Response } from "express";
 import {
   CreateIdeaBody,
   CreateProgressNoteBody,
   CreateProgressNoteParams,
   DeleteIdeaParams,
+  GetCalendarResponse,
   GetDashboardResponse,
   GetIdeaParams,
   GetIdeaResponse,
@@ -13,10 +14,12 @@ import {
   GetPublicIdeaParams,
   GetPublicIdeaResponse,
   GetPublicPortfolioResponse,
+  GetWeeklyReviewResponse,
   ListActivityResponse,
   ListIdeasResponse,
   ListProgressNotesParams,
   ListProgressNotesResponse,
+  SearchResponse,
   UpdateIdeaBody,
   UpdateIdeaParams,
   UpdateIdeaResponse,
@@ -58,6 +61,8 @@ const toIdeaResponse = (idea: Idea) => ({
   nextStep: idea.nextStep,
   dueDate: idea.dueDate,
   reminderAt: idea.reminderAt,
+  recurrenceType: idea.recurrenceType ?? null,
+  recurrenceInterval: idea.recurrenceInterval ?? null,
   createdAt: idea.createdAt,
   updatedAt: idea.updatedAt,
 });
@@ -67,6 +72,7 @@ const toProgressResponse = (note: ProgressNote) => ({
   ideaId: note.ideaId,
   content: note.content,
   mood: note.mood,
+  tags: note.tags ?? [],
   createdAt: note.createdAt,
 });
 
@@ -178,6 +184,63 @@ const summarizeProgress = (dailyTotal: number, weeklyTotal: number, sharedIdeas:
       : "Mark an idea as shared to add it to your public portfolio.",
 });
 
+const computeStreaks = (notes: Array<{ createdAt: Date }>) => {
+  if (notes.length === 0) return { currentStreak: 0, longestStreak: 0 };
+
+  const daySet = new Set<string>();
+  for (const note of notes) {
+    const d = new Date(note.createdAt);
+    d.setHours(0, 0, 0, 0);
+    daySet.add(d.toISOString());
+  }
+
+  const days = Array.from(daySet)
+    .map((d) => new Date(d))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  let longestStreak = 1;
+  let currentRun = 1;
+
+  for (let i = 1; i < days.length; i++) {
+    const prev = days[i - 1]!;
+    const curr = days[i]!;
+    const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+    if (diff === 1) {
+      currentRun++;
+      if (currentRun > longestStreak) longestStreak = currentRun;
+    } else if (diff > 1) {
+      currentRun = 1;
+    }
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const lastDay = days[days.length - 1]!;
+  const lastDayStr = lastDay.toISOString();
+  const hasToday = lastDayStr === today.toISOString();
+  const hasYesterday = lastDayStr === yesterday.toISOString();
+
+  let currentStreak = 0;
+  if (hasToday || hasYesterday) {
+    currentStreak = 1;
+    for (let i = days.length - 2; i >= 0; i--) {
+      const curr = days[i + 1]!;
+      const prev = days[i]!;
+      const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff === 1) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return { currentStreak, longestStreak };
+};
+
 async function seedDataIfEmpty(userId: string): Promise<void> {
   const existing = await db
     .select({ id: ideasTable.id })
@@ -203,6 +266,8 @@ async function seedDataIfEmpty(userId: string): Promise<void> {
         nextStep: "Write the first weekly review and pick one idea to prototype.",
         dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
         reminderAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        recurrenceType: "weekly",
+        recurrenceInterval: 1,
       },
       {
         ownerId: userId,
@@ -241,18 +306,21 @@ async function seedDataIfEmpty(userId: string): Promise<void> {
       content:
         "Defined the basic flow: capture ideas, choose a status, and add progress notes as the work evolves.",
       mood: "Clear",
+      tags: ["planning", "system"],
     },
     {
       ideaId: studioIdea.id,
       content:
         "Next challenge is making the system light enough that it feels like journaling, not project management overhead.",
       mood: "Curious",
+      tags: ["reflection"],
     },
     {
       ideaId: writingIdea.id,
       content:
         "Progress updates should focus on the story of learning, not just a completed checklist.",
       mood: "Focused",
+      tags: ["writing"],
     },
   ]);
 }
@@ -271,6 +339,7 @@ async function getUserProgressNotes(userId: string): Promise<ProgressNote[]> {
       ideaId: progressNotesTable.ideaId,
       content: progressNotesTable.content,
       mood: progressNotesTable.mood,
+      tags: progressNotesTable.tags,
       createdAt: progressNotesTable.createdAt,
     })
     .from(progressNotesTable)
@@ -528,7 +597,7 @@ router.post("/ideas/:id/progress", async (req, res): Promise<void> => {
 
   const [note] = await db
     .insert(progressNotesTable)
-    .values({ ...body.data, ideaId: params.data.id })
+    .values({ ...body.data, ideaId: params.data.id, tags: body.data.tags ?? [] })
     .returning();
 
   await db
@@ -549,14 +618,17 @@ router.get("/dashboard", async (req, res): Promise<void> => {
   await ensureSeedData(userId);
   const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
   const notes = await db
-    .select({ id: progressNotesTable.id })
+    .select({ id: progressNotesTable.id, createdAt: progressNotesTable.createdAt })
     .from(progressNotesTable)
     .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
     .where(eq(ideasTable.ownerId, userId));
+
   const statusCounts = statuses.map((status) => ({
     status,
     count: ideas.filter((idea) => idea.status === status).length,
   }));
+
+  const { currentStreak, longestStreak } = computeStreaks(notes);
 
   res.json(
     GetDashboardResponse.parse({
@@ -564,6 +636,8 @@ router.get("/dashboard", async (req, res): Promise<void> => {
       activeIdeas: ideas.filter((idea) => idea.status !== "shared").length,
       sharedIdeas: ideas.filter((idea) => idea.status === "shared").length,
       progressNotes: notes.length,
+      currentStreak,
+      longestStreak,
       statusCounts,
     }),
   );
@@ -652,6 +726,249 @@ router.get("/progress-summary", async (req, res): Promise<void> => {
           detail: summaries.sharedSummary,
         },
       ],
+    }),
+  );
+});
+
+router.get("/search", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+  if (!q) {
+    res.json(SearchResponse.parse({ ideas: [], notes: [] }));
+    return;
+  }
+
+  const likeQ = `%${q}%`;
+
+  const ideas = await db
+    .select()
+    .from(ideasTable)
+    .where(
+      and(
+        eq(ideasTable.ownerId, userId),
+        or(
+          ilike(ideasTable.title, likeQ),
+          ilike(ideasTable.description, likeQ),
+          ilike(ideasTable.category, likeQ),
+          ilike(ideasTable.nextStep, likeQ),
+        ),
+      ),
+    )
+    .limit(20);
+
+  const notesRaw = await db
+    .select({
+      id: progressNotesTable.id,
+      ideaId: progressNotesTable.ideaId,
+      content: progressNotesTable.content,
+      mood: progressNotesTable.mood,
+      tags: progressNotesTable.tags,
+      createdAt: progressNotesTable.createdAt,
+      ideaTitle: ideasTable.title,
+    })
+    .from(progressNotesTable)
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(
+      and(
+        eq(ideasTable.ownerId, userId),
+        ilike(progressNotesTable.content, likeQ),
+      ),
+    )
+    .limit(20);
+
+  res.json(
+    SearchResponse.parse({
+      ideas: ideas.map(toIdeaResponse),
+      notes: notesRaw.map((n) => ({
+        id: n.id,
+        ideaId: n.ideaId,
+        ideaTitle: n.ideaTitle,
+        content: n.content,
+        mood: n.mood,
+        tags: n.tags ?? [],
+        createdAt: n.createdAt,
+      })),
+    }),
+  );
+});
+
+router.get("/calendar", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+
+  const monthParam = typeof req.query.month === "string" ? req.query.month : null;
+  let rangeStart: Date;
+  let rangeEnd: Date;
+
+  if (monthParam) {
+    rangeStart = new Date(`${monthParam}-01T00:00:00Z`);
+    rangeEnd = new Date(rangeStart);
+    rangeEnd.setMonth(rangeEnd.getMonth() + 1);
+  } else {
+    rangeStart = new Date();
+    rangeStart.setDate(1);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd = new Date(rangeStart);
+    rangeEnd.setMonth(rangeEnd.getMonth() + 1);
+  }
+
+  const ideas = await db
+    .select()
+    .from(ideasTable)
+    .where(eq(ideasTable.ownerId, userId));
+
+  const notesRaw = await db
+    .select({
+      id: progressNotesTable.id,
+      ideaId: progressNotesTable.ideaId,
+      content: progressNotesTable.content,
+      mood: progressNotesTable.mood,
+      tags: progressNotesTable.tags,
+      createdAt: progressNotesTable.createdAt,
+      ideaTitle: ideasTable.title,
+    })
+    .from(progressNotesTable)
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(eq(ideasTable.ownerId, userId));
+
+  const entriesMap = new Map<string, {
+    date: string;
+    ideas: Array<{ id: number; title: string; status: string; dueDate: string | null; recurrenceType: string | null }>;
+    notes: Array<{ id: number; ideaId: number; ideaTitle: string; content: string; mood: string }>;
+  }>();
+
+  const toDateKey = (d: Date) => {
+    const dd = new Date(d);
+    return `${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, "0")}-${String(dd.getDate()).padStart(2, "0")}`;
+  };
+
+  const getOrCreate = (key: string) => {
+    if (!entriesMap.has(key)) {
+      entriesMap.set(key, { date: key, ideas: [], notes: [] });
+    }
+    return entriesMap.get(key)!;
+  };
+
+  for (const idea of ideas) {
+    if (idea.dueDate) {
+      const key = toDateKey(idea.dueDate);
+      if (idea.dueDate >= rangeStart && idea.dueDate < rangeEnd) {
+        getOrCreate(key).ideas.push({
+          id: idea.id,
+          title: idea.title,
+          status: idea.status,
+          dueDate: idea.dueDate.toISOString(),
+          recurrenceType: idea.recurrenceType ?? null,
+        });
+      }
+    }
+  }
+
+  for (const note of notesRaw) {
+    if (note.createdAt >= rangeStart && note.createdAt < rangeEnd) {
+      const key = toDateKey(note.createdAt);
+      getOrCreate(key).notes.push({
+        id: note.id,
+        ideaId: note.ideaId,
+        ideaTitle: note.ideaTitle,
+        content: note.content,
+        mood: note.mood,
+      });
+    }
+  }
+
+  const entries = Array.from(entriesMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+  res.json(GetCalendarResponse.parse(entries));
+});
+
+router.get("/weekly-review", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+
+  const weekParam = typeof req.query.week === "string" ? req.query.week : null;
+  let weekStart: Date;
+
+  if (weekParam) {
+    weekStart = new Date(`${weekParam}T00:00:00Z`);
+  } else {
+    weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  }
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const ideas = await db
+    .select()
+    .from(ideasTable)
+    .where(eq(ideasTable.ownerId, userId));
+
+  const notesRaw = await db
+    .select({
+      id: progressNotesTable.id,
+      ideaId: progressNotesTable.ideaId,
+      content: progressNotesTable.content,
+      mood: progressNotesTable.mood,
+      tags: progressNotesTable.tags,
+      createdAt: progressNotesTable.createdAt,
+      ideaTitle: ideasTable.title,
+    })
+    .from(progressNotesTable)
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(eq(ideasTable.ownerId, userId))
+    .orderBy(desc(progressNotesTable.createdAt));
+
+  const weekNotes = notesRaw.filter(
+    (n) => n.createdAt >= weekStart && n.createdAt < weekEnd,
+  );
+
+  const weekIdeas = ideas.filter(
+    (i) => i.createdAt >= weekStart && i.createdAt < weekEnd,
+  );
+
+  const notesByIdea = new Map<number, number>();
+  for (const note of notesRaw) {
+    notesByIdea.set(note.ideaId, (notesByIdea.get(note.ideaId) ?? 0) + 1);
+  }
+
+  const topIdeas = ideas
+    .map((idea) => ({
+      id: idea.id,
+      title: idea.title,
+      status: idea.status,
+      progressCount: notesByIdea.get(idea.id) ?? 0,
+      nextStep: idea.nextStep,
+    }))
+    .sort((a, b) => b.progressCount - a.progressCount)
+    .slice(0, 5);
+
+  const allTags = Array.from(
+    new Set(notesRaw.flatMap((n) => n.tags ?? [])),
+  );
+
+  res.json(
+    GetWeeklyReviewResponse.parse({
+      weekStart: weekStart.toISOString(),
+      weekEnd: weekEnd.toISOString(),
+      tasksCompleted: ideas.filter(
+        (i) => i.status === "shared" && i.updatedAt >= weekStart && i.updatedAt < weekEnd,
+      ).length,
+      notesWritten: weekNotes.length,
+      ideasCreated: weekIdeas.length,
+      topIdeas,
+      recentNotes: weekNotes.slice(0, 10).map((n) => ({
+        id: n.id,
+        ideaId: n.ideaId,
+        ideaTitle: n.ideaTitle,
+        content: n.content,
+        mood: n.mood,
+        tags: n.tags ?? [],
+        createdAt: n.createdAt,
+      })),
+      allTags,
     }),
   );
 });

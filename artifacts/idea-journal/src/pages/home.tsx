@@ -1,10 +1,16 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { IdeaBoard } from "@/components/idea-board";
 import { ActivityFeed } from "@/components/activity-feed";
 import { CreateIdeaDialog } from "@/components/create-idea-dialog";
+import { EndOfDayReview } from "@/components/end-of-day-review";
+import { Button } from "@/components/ui/button";
+import { Moon } from "lucide-react";
 
 export default function Home() {
+  const [endOfDayOpen, setEndOfDayOpen] = useState(false);
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto space-y-10">
@@ -17,13 +23,22 @@ export default function Home() {
               A quiet place to capture ideas, watch them grow, and share what matters.
             </p>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEndOfDayOpen(true)}
+              className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-800 dark:hover:bg-indigo-900/20"
+            >
+              <Moon className="w-4 h-4" />
+              End-of-Day Review
+            </Button>
             <CreateIdeaDialog />
           </div>
         </section>
 
         <DashboardStats />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-5">
             <div>
@@ -33,10 +48,12 @@ export default function Home() {
             <IdeaBoard />
           </div>
           <div className="space-y-5">
-             <ActivityFeed />
+            <ActivityFeed />
           </div>
         </div>
       </div>
+
+      <EndOfDayReview open={endOfDayOpen} onClose={() => setEndOfDayOpen(false)} />
     </Layout>
   );
 }

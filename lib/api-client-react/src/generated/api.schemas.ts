@@ -36,6 +36,8 @@ export interface Idea {
   nextStep: string;
   dueDate: string | null;
   reminderAt: string | null;
+  recurrenceType?: string | null;
+  recurrenceInterval?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +47,7 @@ export interface ProgressNote {
   ideaId: number;
   content: string;
   mood: string;
+  tags: string[];
   createdAt: string;
 }
 
@@ -65,6 +68,8 @@ export interface IdeaInput {
   nextStep: string;
   dueDate?: string | null;
   reminderAt?: string | null;
+  recurrenceType?: string | null;
+  recurrenceInterval?: number | null;
 }
 
 export interface IdeaUpdate {
@@ -80,6 +85,8 @@ export interface IdeaUpdate {
   nextStep?: string;
   dueDate?: string | null;
   reminderAt?: string | null;
+  recurrenceType?: string | null;
+  recurrenceInterval?: number | null;
 }
 
 export interface ProgressNoteInput {
@@ -87,6 +94,7 @@ export interface ProgressNoteInput {
   content: string;
   /** @minLength 1 */
   mood: string;
+  tags?: string[];
 }
 
 export interface StatusCount {
@@ -99,6 +107,8 @@ export interface DashboardSummary {
   activeIdeas: number;
   sharedIdeas: number;
   progressNotes: number;
+  currentStreak: number;
+  longestStreak: number;
   statusCounts: StatusCount[];
 }
 
@@ -151,4 +161,25 @@ export interface PublicPortfolio {
   description: string;
   sharedIdeas: PublicIdea[];
   stats: ProductivityMetric[];
+}
+
+export interface CalendarEntry {
+  date: string;
+  ideas: Array<{ id: number; title: string; status: string; dueDate: string | null }>;
+  notes: Array<{ id: number; ideaId: number; ideaTitle: string; content: string; mood: string }>;
+}
+
+export interface WeeklyReview {
+  weekStart: string;
+  weekEnd: string;
+  tasksCompleted: number;
+  notesWritten: number;
+  ideasCreated: number;
+  topIdeas: Array<{ id: number; title: string; status: string; progressCount: number }>;
+  recentNotes: ProgressNote[];
+}
+
+export interface SearchResult {
+  ideas: Idea[];
+  notes: Array<ProgressNote & { ideaTitle: string }>;
 }

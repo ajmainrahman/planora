@@ -10,6 +10,7 @@ export const progressNotesTable = pgTable("progress_notes", {
     .references(() => ideasTable.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   mood: text("mood").notNull(),
+  tags: text("tags").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

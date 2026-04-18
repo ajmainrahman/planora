@@ -337,7 +337,12 @@ export default function IdeaDetail() {
 
         <div className="space-y-6">
           <h2 className="text-2xl font-serif font-medium text-foreground">Progress Journal</h2>
-          <ProgressTimeline ideaId={ideaId} initialNotes={idea.progressNotes} />
+          <ProgressTimeline
+            ideaId={ideaId}
+            initialNotes={idea.progressNotes}
+            ideaTitle={idea.title}
+            ideaNextStep={idea.nextStep}
+          />
         </div>
       </div>
     </Layout>

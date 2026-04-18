@@ -46,6 +46,8 @@ export const CreateIdeaBody = zod.object({
   nextStep: zod.string().min(1),
   dueDate: zod.coerce.date().nullish(),
   reminderAt: zod.coerce.date().nullish(),
+  recurrenceType: zod.string().nullish(),
+  recurrenceInterval: zod.number().nullish(),
 });
 
 /**
@@ -66,6 +68,8 @@ export const GetIdeaResponse = zod
     nextStep: zod.string(),
     dueDate: zod.coerce.date().nullable(),
     reminderAt: zod.coerce.date().nullable(),
+    recurrenceType: zod.string().nullable().optional(),
+    recurrenceInterval: zod.number().nullable().optional(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -77,6 +81,7 @@ export const GetIdeaResponse = zod
           ideaId: zod.number(),
           content: zod.string(),
           mood: zod.string(),
+          tags: zod.array(zod.string()).default([]),
           createdAt: zod.coerce.date(),
         }),
       ),
@@ -99,6 +104,8 @@ export const UpdateIdeaBody = zod.object({
   nextStep: zod.string().min(1).optional(),
   dueDate: zod.coerce.date().nullish(),
   reminderAt: zod.coerce.date().nullish(),
+  recurrenceType: zod.string().nullish(),
+  recurrenceInterval: zod.number().nullish(),
 });
 
 export const UpdateIdeaResponse = zod.object({
@@ -111,6 +118,8 @@ export const UpdateIdeaResponse = zod.object({
   nextStep: zod.string(),
   dueDate: zod.coerce.date().nullable(),
   reminderAt: zod.coerce.date().nullable(),
+  recurrenceType: zod.string().nullable().optional(),
+  recurrenceInterval: zod.number().nullable().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -134,6 +143,7 @@ export const ListProgressNotesResponseItem = zod.object({
   ideaId: zod.number(),
   content: zod.string(),
   mood: zod.string(),
+  tags: zod.array(zod.string()).default([]),
   createdAt: zod.coerce.date(),
 });
 export const ListProgressNotesResponse = zod.array(
@@ -150,6 +160,7 @@ export const CreateProgressNoteParams = zod.object({
 export const CreateProgressNoteBody = zod.object({
   content: zod.string().min(1),
   mood: zod.string().min(1),
+  tags: zod.array(zod.string()).optional().default([]),
 });
 
 /**
@@ -160,12 +171,95 @@ export const GetDashboardResponse = zod.object({
   activeIdeas: zod.number(),
   sharedIdeas: zod.number(),
   progressNotes: zod.number(),
+  currentStreak: zod.number(),
+  longestStreak: zod.number(),
   statusCounts: zod.array(
     zod.object({
       status: zod.enum(["seed", "planning", "building", "shared"]),
       count: zod.number(),
     }),
   ),
+});
+
+/**
+ * @summary Search ideas and progress notes
+ */
+export const SearchQuery = zod.object({
+  q: zod.string().min(1),
+});
+
+export const SearchResponse = zod.object({
+  ideas: zod.array(zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    description: zod.string(),
+    status: zod.enum(["seed", "planning", "building", "shared"]),
+    priority: zod.enum(["low", "medium", "high"]),
+    category: zod.string(),
+    nextStep: zod.string(),
+    dueDate: zod.coerce.date().nullable(),
+    reminderAt: zod.coerce.date().nullable(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })),
+  notes: zod.array(zod.object({
+    id: zod.number(),
+    ideaId: zod.number(),
+    ideaTitle: zod.string(),
+    content: zod.string(),
+    mood: zod.string(),
+    tags: zod.array(zod.string()).default([]),
+    createdAt: zod.coerce.date(),
+  })),
+});
+
+/**
+ * @summary Get calendar entries (ideas with due dates + notes by date)
+ */
+export const GetCalendarResponse = zod.array(zod.object({
+  date: zod.string(),
+  ideas: zod.array(zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    status: zod.string(),
+    dueDate: zod.string().nullable(),
+    recurrenceType: zod.string().nullable(),
+  })),
+  notes: zod.array(zod.object({
+    id: zod.number(),
+    ideaId: zod.number(),
+    ideaTitle: zod.string(),
+    content: zod.string(),
+    mood: zod.string(),
+  })),
+}));
+
+/**
+ * @summary Get weekly review data
+ */
+export const GetWeeklyReviewResponse = zod.object({
+  weekStart: zod.string(),
+  weekEnd: zod.string(),
+  tasksCompleted: zod.number(),
+  notesWritten: zod.number(),
+  ideasCreated: zod.number(),
+  topIdeas: zod.array(zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    status: zod.string(),
+    progressCount: zod.number(),
+    nextStep: zod.string(),
+  })),
+  recentNotes: zod.array(zod.object({
+    id: zod.number(),
+    ideaId: zod.number(),
+    ideaTitle: zod.string(),
+    content: zod.string(),
+    mood: zod.string(),
+    tags: zod.array(zod.string()).default([]),
+    createdAt: zod.coerce.date(),
+  })),
+  allTags: zod.array(zod.string()),
 });
 
 /**
