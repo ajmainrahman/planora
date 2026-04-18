@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import IdeaDetail from "@/pages/idea-detail";
+import PublicPortfolio from "@/pages/public-portfolio";
+import PublicIdea from "@/pages/public-idea";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +22,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/ideas/:id" component={IdeaDetail} />
+      <Route path="/share" component={PublicPortfolio} />
+      <Route path="/share/:id" component={PublicIdea} />
       <Route component={NotFound} />
     </Switch>
   );
