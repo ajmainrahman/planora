@@ -44,8 +44,8 @@ export const CreateIdeaBody = zod.object({
   priority: zod.enum(["low", "medium", "high"]),
   category: zod.string().min(1),
   nextStep: zod.string().min(1),
-  dueDate: zod.coerce.date().nullable().optional(),
-  reminderAt: zod.coerce.date().nullable().optional(),
+  dueDate: zod.coerce.date().nullish(),
+  reminderAt: zod.coerce.date().nullish(),
 });
 
 /**
@@ -97,8 +97,8 @@ export const UpdateIdeaBody = zod.object({
   priority: zod.enum(["low", "medium", "high"]).optional(),
   category: zod.string().min(1).optional(),
   nextStep: zod.string().min(1).optional(),
-  dueDate: zod.coerce.date().nullable().optional(),
-  reminderAt: zod.coerce.date().nullable().optional(),
+  dueDate: zod.coerce.date().nullish(),
+  reminderAt: zod.coerce.date().nullish(),
 });
 
 export const UpdateIdeaResponse = zod.object({
@@ -179,3 +179,117 @@ export const ListActivityResponseItem = zod.object({
   createdAt: zod.coerce.date(),
 });
 export const ListActivityResponse = zod.array(ListActivityResponseItem);
+
+/**
+ * @summary Get daily and weekly research progress summaries
+ */
+export const GetProgressSummaryResponse = zod.object({
+  daily: zod.array(
+    zod.object({
+      label: zod.string(),
+      ideasCreated: zod.number(),
+      notesAdded: zod.number(),
+      ideasShared: zod.number(),
+      totalActivity: zod.number(),
+    }),
+  ),
+  weekly: zod.array(
+    zod.object({
+      label: zod.string(),
+      ideasCreated: zod.number(),
+      notesAdded: zod.number(),
+      ideasShared: zod.number(),
+      totalActivity: zod.number(),
+    }),
+  ),
+  metrics: zod.array(
+    zod.object({
+      label: zod.string(),
+      value: zod.number(),
+      detail: zod.string(),
+    }),
+  ),
+  dailySummary: zod.string(),
+  weeklySummary: zod.string(),
+});
+
+/**
+ * @summary Get public shareable portfolio page data
+ */
+export const GetPublicPortfolioResponse = zod.object({
+  title: zod.string(),
+  description: zod.string(),
+  sharedIdeas: zod.array(
+    zod
+      .object({
+        id: zod.number(),
+        title: zod.string(),
+        description: zod.string(),
+        status: zod.enum(["seed", "planning", "building", "shared"]),
+        priority: zod.enum(["low", "medium", "high"]),
+        category: zod.string(),
+        nextStep: zod.string(),
+        dueDate: zod.coerce.date().nullable(),
+        reminderAt: zod.coerce.date().nullable(),
+        createdAt: zod.coerce.date(),
+        updatedAt: zod.coerce.date(),
+      })
+      .and(
+        zod.object({
+          shareUrl: zod.string(),
+          progressNotes: zod.array(
+            zod.object({
+              id: zod.number(),
+              ideaId: zod.number(),
+              content: zod.string(),
+              mood: zod.string(),
+              createdAt: zod.coerce.date(),
+            }),
+          ),
+        }),
+      ),
+  ),
+  stats: zod.array(
+    zod.object({
+      label: zod.string(),
+      value: zod.number(),
+      detail: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get a public shareable idea page
+ */
+export const GetPublicIdeaParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPublicIdeaResponse = zod
+  .object({
+    id: zod.number(),
+    title: zod.string(),
+    description: zod.string(),
+    status: zod.enum(["seed", "planning", "building", "shared"]),
+    priority: zod.enum(["low", "medium", "high"]),
+    category: zod.string(),
+    nextStep: zod.string(),
+    dueDate: zod.coerce.date().nullable(),
+    reminderAt: zod.coerce.date().nullable(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      shareUrl: zod.string(),
+      progressNotes: zod.array(
+        zod.object({
+          id: zod.number(),
+          ideaId: zod.number(),
+          content: zod.string(),
+          mood: zod.string(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+    }),
+  );

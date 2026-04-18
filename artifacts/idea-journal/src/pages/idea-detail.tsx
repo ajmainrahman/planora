@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProgressTimeline } from "@/components/progress-timeline";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Trash2, Save, Calendar, Tag, Target, Bell } from "lucide-react";
+import { ArrowLeft, Trash2, Save, Calendar, Tag, Target, Bell, Share2, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -142,6 +142,14 @@ export default function IdeaDetail() {
           </Link>
           
           <div className="flex items-center gap-2">
+            {!isEditing && idea.status === IdeaStatus.shared && (
+              <Button variant="outline" asChild className="gap-2 text-primary border-primary/20 hover:bg-primary/10">
+                <Link href={`/share/${idea.id}`} target="_blank">
+                  <ExternalLink className="w-4 h-4" />
+                  View Public Page
+                </Link>
+              </Button>
+            )}
             {!isEditing ? (
               <Button variant="outline" onClick={() => setIsEditing(true)}>
                 Edit Details

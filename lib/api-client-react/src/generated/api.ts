@@ -26,6 +26,9 @@ import type {
   IdeaUpdate,
   ProgressNote,
   ProgressNoteInput,
+  ProgressSummary,
+  PublicIdea,
+  PublicPortfolio,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -828,6 +831,243 @@ export function useListActivity<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListActivityQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get daily and weekly research progress summaries
+ */
+export const getGetProgressSummaryUrl = () => {
+  return `/api/progress-summary`;
+};
+
+export const getProgressSummary = async (
+  options?: RequestInit,
+): Promise<ProgressSummary> => {
+  return customFetch<ProgressSummary>(getGetProgressSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetProgressSummaryQueryKey = () => {
+  return [`/api/progress-summary`] as const;
+};
+
+export const getGetProgressSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProgressSummary>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressSummary>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProgressSummaryQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getProgressSummary>>
+  > = ({ signal }) => getProgressSummary({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressSummary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProgressSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProgressSummary>>
+>;
+export type GetProgressSummaryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get daily and weekly research progress summaries
+ */
+
+export function useGetProgressSummary<
+  TData = Awaited<ReturnType<typeof getProgressSummary>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressSummary>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProgressSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get public shareable portfolio page data
+ */
+export const getGetPublicPortfolioUrl = () => {
+  return `/api/share`;
+};
+
+export const getPublicPortfolio = async (
+  options?: RequestInit,
+): Promise<PublicPortfolio> => {
+  return customFetch<PublicPortfolio>(getGetPublicPortfolioUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicPortfolioQueryKey = () => {
+  return [`/api/share`] as const;
+};
+
+export const getGetPublicPortfolioQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicPortfolio>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicPortfolio>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicPortfolioQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPublicPortfolio>>
+  > = ({ signal }) => getPublicPortfolio({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicPortfolio>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicPortfolioQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicPortfolio>>
+>;
+export type GetPublicPortfolioQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get public shareable portfolio page data
+ */
+
+export function useGetPublicPortfolio<
+  TData = Awaited<ReturnType<typeof getPublicPortfolio>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicPortfolio>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicPortfolioQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a public shareable idea page
+ */
+export const getGetPublicIdeaUrl = (id: number) => {
+  return `/api/share/${id}`;
+};
+
+export const getPublicIdea = async (
+  id: number,
+  options?: RequestInit,
+): Promise<PublicIdea> => {
+  return customFetch<PublicIdea>(getGetPublicIdeaUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicIdeaQueryKey = (id: number) => {
+  return [`/api/share/${id}`] as const;
+};
+
+export const getGetPublicIdeaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicIdea>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicIdea>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicIdeaQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicIdea>>> = ({
+    signal,
+  }) => getPublicIdea(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicIdea>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicIdeaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicIdea>>
+>;
+export type GetPublicIdeaQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a public shareable idea page
+ */
+
+export function useGetPublicIdea<
+  TData = Awaited<ReturnType<typeof getPublicIdea>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicIdea>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicIdeaQueryOptions(id, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

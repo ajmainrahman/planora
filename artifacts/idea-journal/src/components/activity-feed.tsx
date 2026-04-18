@@ -1,56 +1,113 @@
-import { useListActivity, getListActivityQueryKey } from "@workspace/api-client-react";
+import { useGetProgressSummary, getGetProgressSummaryQueryKey, useListActivity, getListActivityQueryKey } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
-import { PlusCircle, Edit3, MessageSquare } from "lucide-react";
+import { Activity, TrendingUp, Zap, PlusCircle, Edit3, MessageSquare } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityItem } from "@workspace/api-client-react";
 
 export function ActivityFeed() {
-  const { data: activities, isLoading } = useListActivity({
+  const { data: activity, isLoading: isActivityLoading } = useListActivity({
     query: { queryKey: getListActivityQueryKey() }
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="flex gap-4">
-            <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-2/3" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const { data: summary, isLoading: isSummaryLoading } = useGetProgressSummary({
+    query: { queryKey: getGetProgressSummaryQueryKey() }
+  });
 
-  if (!activities || activities.length === 0) {
+  if (isActivityLoading || isSummaryLoading) {
     return (
-      <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-2xl border border-dashed">
-        No activity yet. Start journaling!
+      <div className="space-y-6">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-      {activities.map((item: ActivityItem) => (
-        <div key={item.id} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-muted/50 text-muted-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-            <ActivityIcon type={item.type} />
-          </div>
-          <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-card border shadow-sm p-4 rounded-xl hover-elevate transition-all">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-foreground text-sm">{item.title}</span>
-              <time className="text-xs text-muted-foreground whitespace-nowrap">
-                {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
-              </time>
+    <div className="space-y-6">
+      {summary && (
+        <Card className="rounded-2xl border-border/60 shadow-sm overflow-hidden bg-card">
+          <CardHeader className="pb-4 border-b bg-muted/20">
+            <div className="flex items-center gap-2 text-primary">
+              <TrendingUp className="w-5 h-5" />
+              <CardTitle className="text-xl font-serif font-medium">Progress Pulse</CardTitle>
             </div>
-            <p className="text-sm text-muted-foreground leading-snug">{item.detail}</p>
+            <CardDescription className="text-sm">Your recent momentum and habits.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                  <h4 className="text-sm font-medium text-foreground mb-1">Weekly Insight</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{summary.weeklySummary || "Not enough data to summarize yet."}</p>
+                </div>
+                <div className="space-y-3">
+                  {summary.metrics && summary.metrics.map((metric, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-background border">
+                      <div>
+                        <div className="text-sm font-medium">{metric.label}</div>
+                        <div className="text-xs text-muted-foreground">{metric.detail}</div>
+                      </div>
+                      <div className="text-lg font-serif font-medium text-primary">{metric.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-foreground">Weekly Activity</h4>
+                <div className="space-y-2">
+                  {summary.weekly && summary.weekly.map((bucket, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{bucket.label}</span>
+                        <span>{bucket.totalActivity} actions</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                        {bucket.ideasCreated > 0 && <div className="h-full bg-sky-500" style={{ width: `${(bucket.ideasCreated / Math.max(bucket.totalActivity, 1)) * 100}%` }} />}
+                        {bucket.notesAdded > 0 && <div className="h-full bg-emerald-500" style={{ width: `${(bucket.notesAdded / Math.max(bucket.totalActivity, 1)) * 100}%` }} />}
+                        {bucket.ideasShared > 0 && <div className="h-full bg-violet-500" style={{ width: `${(bucket.ideasShared / Math.max(bucket.totalActivity, 1)) * 100}%` }} />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="rounded-2xl border-border/60 shadow-sm overflow-hidden bg-card">
+        <CardHeader className="pb-4 border-b bg-muted/20">
+          <div className="flex items-center gap-2 text-foreground">
+            <Activity className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="text-xl font-serif font-medium">Recent Activity</CardTitle>
           </div>
-        </div>
-      ))}
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y max-h-[400px] overflow-y-auto">
+            {activity && activity.length > 0 ? (
+              activity.map((item: ActivityItem) => (
+                <div key={item.id} className="p-4 hover:bg-muted/30 transition-colors flex gap-4 items-start">
+                  <div className="mt-1 p-2 rounded-full bg-primary/10 text-primary shrink-0">
+                    <ActivityIcon type={item.type} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">{item.title}</div>
+                    <div className="text-sm text-muted-foreground mt-0.5">{item.detail}</div>
+                    <div className="text-xs text-muted-foreground mt-2 opacity-60">
+                      {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">
+                No recent activity. Get started by planting a seed!
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -60,6 +117,6 @@ function ActivityIcon({ type }: { type: string }) {
     case 'idea_created': return <PlusCircle className="w-4 h-4 text-emerald-500" />;
     case 'idea_updated': return <Edit3 className="w-4 h-4 text-blue-500" />;
     case 'progress_added': return <MessageSquare className="w-4 h-4 text-amber-500" />;
-    default: return <div className="w-2 h-2 rounded-full bg-foreground" />;
+    default: return <Zap className="w-4 h-4 text-primary" />;
   }
 }

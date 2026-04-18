@@ -118,3 +118,37 @@ export interface ActivityItem {
   detail: string;
   createdAt: string;
 }
+
+export interface ProgressBucket {
+  label: string;
+  ideasCreated: number;
+  notesAdded: number;
+  ideasShared: number;
+  totalActivity: number;
+}
+
+export interface ProductivityMetric {
+  label: string;
+  value: number;
+  detail: string;
+}
+
+export interface ProgressSummary {
+  daily: ProgressBucket[];
+  weekly: ProgressBucket[];
+  metrics: ProductivityMetric[];
+  dailySummary: string;
+  weeklySummary: string;
+}
+
+export type PublicIdea = Idea & {
+  shareUrl: string;
+  progressNotes: ProgressNote[];
+};
+
+export interface PublicPortfolio {
+  title: string;
+  description: string;
+  sharedIdeas: PublicIdea[];
+  stats: ProductivityMetric[];
+}

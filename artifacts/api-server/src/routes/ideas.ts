@@ -8,6 +8,10 @@ import {
   GetDashboardResponse,
   GetIdeaParams,
   GetIdeaResponse,
+  GetProgressSummaryResponse,
+  GetPublicIdeaParams,
+  GetPublicIdeaResponse,
+  GetPublicPortfolioResponse,
   ListActivityResponse,
   ListIdeasResponse,
   ListProgressNotesParams,
@@ -50,6 +54,114 @@ const toProgressResponse = (note: ProgressNote) => ({
   createdAt: note.createdAt,
 });
 
+const toPublicIdeaResponse = (idea: Idea, notes: ProgressNote[] = []) => ({
+  ...toIdeaResponse(idea),
+  shareUrl: `/share/${idea.id}`,
+  progressNotes: notes.map(toProgressResponse),
+});
+
+const formatDateLabel = (date: Date) =>
+  new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+
+const formatWeekLabel = (date: Date) => {
+  const weekStart = new Date(date);
+  const day = weekStart.getDay();
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - day);
+  return `Week of ${formatDateLabel(weekStart)}`;
+};
+
+const daysBetween = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const countInRange = (items: Date[], start: Date, end: Date) =>
+  items.filter((item) => item >= start && item < end).length;
+
+const buildDailyBuckets = (ideas: Idea[], notes: ProgressNote[]) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const start = daysBetween(today, index - 6);
+    const end = daysBetween(start, 1);
+    const ideasCreated = countInRange(
+      ideas.map((idea) => idea.createdAt),
+      start,
+      end,
+    );
+    const notesAdded = countInRange(
+      notes.map((note) => note.createdAt),
+      start,
+      end,
+    );
+    const ideasShared = countInRange(
+      ideas.filter((idea) => idea.status === "shared").map((idea) => idea.updatedAt),
+      start,
+      end,
+    );
+
+    return {
+      label: formatDateLabel(start),
+      ideasCreated,
+      notesAdded,
+      ideasShared,
+      totalActivity: ideasCreated + notesAdded + ideasShared,
+    };
+  });
+};
+
+const buildWeeklyBuckets = (ideas: Idea[], notes: ProgressNote[]) => {
+  const currentWeekStart = new Date();
+  currentWeekStart.setHours(0, 0, 0, 0);
+  currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+
+  return Array.from({ length: 6 }, (_, index) => {
+    const start = daysBetween(currentWeekStart, (index - 5) * 7);
+    const end = daysBetween(start, 7);
+    const ideasCreated = countInRange(
+      ideas.map((idea) => idea.createdAt),
+      start,
+      end,
+    );
+    const notesAdded = countInRange(
+      notes.map((note) => note.createdAt),
+      start,
+      end,
+    );
+    const ideasShared = countInRange(
+      ideas.filter((idea) => idea.status === "shared").map((idea) => idea.updatedAt),
+      start,
+      end,
+    );
+
+    return {
+      label: formatWeekLabel(start),
+      ideasCreated,
+      notesAdded,
+      ideasShared,
+      totalActivity: ideasCreated + notesAdded + ideasShared,
+    };
+  });
+};
+
+const summarizeProgress = (dailyTotal: number, weeklyTotal: number, sharedIdeas: number) => ({
+  dailySummary:
+    dailyTotal > 0
+      ? `You logged ${dailyTotal} research actions over the last 7 days.`
+      : "No research activity has been logged this week yet.",
+  weeklySummary:
+    weeklyTotal > 0
+      ? `The last 6 weeks contain ${weeklyTotal} total idea, note, and sharing actions.`
+      : "Start adding notes or moving ideas forward to build your weekly graph.",
+  sharedSummary:
+    sharedIdeas > 0
+      ? `${sharedIdeas} idea${sharedIdeas === 1 ? " is" : "s are"} ready to share publicly.`
+      : "Mark an idea as shared to add it to your public portfolio.",
+});
+
 async function seedDataIfEmpty(): Promise<void> {
   const existing = await db.select({ id: ideasTable.id }).from(ideasTable).limit(1);
 
@@ -75,7 +187,7 @@ async function seedDataIfEmpty(): Promise<void> {
         title: "Publish tiny progress notes",
         description:
           "Share concise updates that show what changed, what was learned, and what is next without needing a polished final result.",
-        status: "planning",
+        status: "shared",
         priority: "medium",
         category: "Sharing",
         nextStep: "Draft three update formats and choose the easiest one to keep using.",
@@ -365,6 +477,115 @@ router.get("/activity", async (_req, res): Promise<void> => {
     .slice(0, 12);
 
   res.json(ListActivityResponse.parse(activity));
+});
+
+router.get("/progress-summary", async (_req, res): Promise<void> => {
+  await ensureSeedData();
+  const ideas = await db.select().from(ideasTable);
+  const notes = await db.select().from(progressNotesTable);
+  const daily = buildDailyBuckets(ideas, notes);
+  const weekly = buildWeeklyBuckets(ideas, notes);
+  const dailyTotal = daily.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
+  const weeklyTotal = weekly.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
+  const sharedIdeas = ideas.filter((idea) => idea.status === "shared").length;
+  const summaries = summarizeProgress(dailyTotal, weeklyTotal, sharedIdeas);
+
+  res.json(
+    GetProgressSummaryResponse.parse({
+      daily,
+      weekly,
+      dailySummary: summaries.dailySummary,
+      weeklySummary: summaries.weeklySummary,
+      metrics: [
+        {
+          label: "7-day momentum",
+          value: dailyTotal,
+          detail: "Ideas, notes, and shares recorded this week",
+        },
+        {
+          label: "6-week output",
+          value: weeklyTotal,
+          detail: "Research actions across your recent archive",
+        },
+        {
+          label: "Share-ready",
+          value: sharedIdeas,
+          detail: summaries.sharedSummary,
+        },
+      ],
+    }),
+  );
+});
+
+router.get("/share", async (_req, res): Promise<void> => {
+  await ensureSeedData();
+  const sharedIdeas = await db
+    .select()
+    .from(ideasTable)
+    .where(eq(ideasTable.status, "shared"))
+    .orderBy(desc(ideasTable.updatedAt));
+  const notes = await db.select().from(progressNotesTable).orderBy(desc(progressNotesTable.createdAt));
+
+  res.json(
+    GetPublicPortfolioResponse.parse({
+      title: "Planora Research Portfolio",
+      description:
+        "A public collection of ideas that moved from rough sparks into visible progress.",
+      sharedIdeas: sharedIdeas.map((idea) =>
+        toPublicIdeaResponse(
+          idea,
+          notes.filter((note) => note.ideaId === idea.id),
+        ),
+      ),
+      stats: [
+        {
+          label: "Published ideas",
+          value: sharedIdeas.length,
+          detail: "Ideas marked as shared",
+        },
+        {
+          label: "Progress notes",
+          value: notes.filter((note) =>
+            sharedIdeas.some((idea) => idea.id === note.ideaId),
+          ).length,
+          detail: "Public learning updates",
+        },
+        {
+          label: "Active categories",
+          value: new Set(sharedIdeas.map((idea) => idea.category)).size,
+          detail: "Research themes represented",
+        },
+      ],
+    }),
+  );
+});
+
+router.get("/share/:id", async (req, res): Promise<void> => {
+  await ensureSeedData();
+  const params = GetPublicIdeaParams.safeParse(req.params);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [idea] = await db
+    .select()
+    .from(ideasTable)
+    .where(eq(ideasTable.id, params.data.id));
+
+  if (!idea || idea.status !== "shared") {
+    res.status(404).json({ error: "Public idea not found" });
+    return;
+  }
+
+  const notes = await db
+    .select()
+    .from(progressNotesTable)
+    .where(eq(progressNotesTable.ideaId, idea.id))
+    .orderBy(desc(progressNotesTable.createdAt));
+
+  res.json(GetPublicIdeaResponse.parse(toPublicIdeaResponse(idea, notes)));
 });
 
 export default router;

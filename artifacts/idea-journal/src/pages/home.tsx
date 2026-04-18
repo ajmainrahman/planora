@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { IdeaBoard } from "@/components/idea-board";
+import { ActivityFeed } from "@/components/activity-feed";
 import { CreateIdeaDialog } from "@/components/create-idea-dialog";
 
 export default function Home() {
@@ -22,13 +23,18 @@ export default function Home() {
         </section>
 
         <DashboardStats />
-
-        <div className="space-y-5">
-          <div>
-            <h2 className="text-2xl font-serif font-medium text-foreground">Your Ideas</h2>
-            <p className="text-sm text-muted-foreground mt-1">Browse by feed or board, filter by status, category, or priority.</p>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-5">
+            <div>
+              <h2 className="text-2xl font-serif font-medium text-foreground">Your Ideas</h2>
+              <p className="text-sm text-muted-foreground mt-1">Browse by feed or board, filter by status, category, or priority.</p>
+            </div>
+            <IdeaBoard />
           </div>
-          <IdeaBoard />
+          <div className="space-y-5">
+             <ActivityFeed />
+          </div>
         </div>
       </div>
     </Layout>

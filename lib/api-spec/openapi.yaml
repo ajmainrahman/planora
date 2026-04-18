@@ -171,6 +171,46 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivityItem"
+  /progress-summary:
+    get:
+      operationId: getProgressSummary
+      tags: [dashboard]
+      summary: Get daily and weekly research progress summaries
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+  /share:
+    get:
+      operationId: getPublicPortfolio
+      tags: [dashboard]
+      summary: Get public shareable portfolio page data
+      responses:
+        "200":
+          description: Public portfolio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicPortfolio"
+  /share/{id}:
+    get:
+      operationId: getPublicIdea
+      tags: [ideas]
+      summary: Get a public shareable idea page
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Public idea
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicIdea"
+        "404":
+          description: Public idea not found
 components:
   parameters:
     IdPath:
@@ -403,3 +443,94 @@ components:
         - title
         - detail
         - createdAt
+    ProgressBucket:
+      type: object
+      properties:
+        label:
+          type: string
+        ideasCreated:
+          type: integer
+        notesAdded:
+          type: integer
+        ideasShared:
+          type: integer
+        totalActivity:
+          type: integer
+      required:
+        - label
+        - ideasCreated
+        - notesAdded
+        - ideasShared
+        - totalActivity
+    ProductivityMetric:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: integer
+        detail:
+          type: string
+      required:
+        - label
+        - value
+        - detail
+    ProgressSummary:
+      type: object
+      properties:
+        daily:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressBucket"
+        weekly:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressBucket"
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductivityMetric"
+        dailySummary:
+          type: string
+        weeklySummary:
+          type: string
+      required:
+        - daily
+        - weekly
+        - metrics
+        - dailySummary
+        - weeklySummary
+    PublicIdea:
+      allOf:
+        - $ref: "#/components/schemas/Idea"
+        - type: object
+          properties:
+            shareUrl:
+              type: string
+            progressNotes:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProgressNote"
+          required:
+            - shareUrl
+            - progressNotes
+    PublicPortfolio:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sharedIdeas:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicIdea"
+        stats:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductivityMetric"
+      required:
+        - title
+        - description
+        - sharedIdeas
+        - stats
