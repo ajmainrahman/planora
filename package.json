@@ -2,7 +2,6 @@
   "name": "planora-root",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
