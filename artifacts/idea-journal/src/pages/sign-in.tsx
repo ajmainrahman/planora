@@ -65,7 +65,7 @@ export default function SignIn() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d7d6f]/30 focus:border-[#2d7d6f] placeholder:text-gray-400 transition"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3a8ea6]/30 focus:border-[#3a8ea6] placeholder:text-gray-400 transition"
             />
           </div>
 
@@ -78,7 +78,7 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d7d6f]/30 focus:border-[#2d7d6f] placeholder:text-gray-400 transition"
+                className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3a8ea6]/30 focus:border-[#3a8ea6] placeholder:text-gray-400 transition"
               />
               <button
                 type="button"
@@ -102,7 +102,7 @@ export default function SignIn() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#2d7d6f] hover:bg-[#236158] text-white text-sm font-medium transition disabled:opacity-60 mt-2"
+            className="w-full py-2.5 px-4 rounded-xl bg-[#3a8ea6] hover:bg-[#2d7a95] text-white text-sm font-medium transition disabled:opacity-60 mt-2"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
@@ -110,7 +110,7 @@ export default function SignIn() {
 
         <p className="mt-5 text-center text-sm text-gray-500">
           First time?{" "}
-          <Link href="/sign-up" className="text-[#2d7d6f] font-medium hover:underline">
+          <Link href="/sign-up" className="text-[#3a8ea6] font-medium hover:underline">
             Create your account
           </Link>
         </p>

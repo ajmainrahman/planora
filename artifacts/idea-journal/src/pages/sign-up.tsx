@@ -69,7 +69,7 @@ export default function SignUp() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d7d6f]/30 focus:border-[#2d7d6f] placeholder:text-gray-400 transition"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3a8ea6]/30 focus:border-[#3a8ea6] placeholder:text-gray-400 transition"
             />
           </div>
 
@@ -81,7 +81,7 @@ export default function SignUp() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d7d6f]/30 focus:border-[#2d7d6f] placeholder:text-gray-400 transition"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3a8ea6]/30 focus:border-[#3a8ea6] placeholder:text-gray-400 transition"
             />
           </div>
 
@@ -95,7 +95,7 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d7d6f]/30 focus:border-[#2d7d6f] placeholder:text-gray-400 transition"
+                className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl bg-gray-100/70 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3a8ea6]/30 focus:border-[#3a8ea6] placeholder:text-gray-400 transition"
               />
               <button
                 type="button"
@@ -119,7 +119,7 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#2d7d6f] hover:bg-[#236158] text-white text-sm font-medium transition disabled:opacity-60 mt-2"
+            className="w-full py-2.5 px-4 rounded-xl bg-[#3a8ea6] hover:bg-[#2d7a95] text-white text-sm font-medium transition disabled:opacity-60 mt-2"
           >
             {loading ? "Creating account…" : "Create account"}
           </button>
@@ -127,7 +127,7 @@ export default function SignUp() {
 
         <p className="mt-5 text-center text-sm text-gray-500">
           Already have an account?{" "}
-          <Link href="/sign-in" className="text-[#2d7d6f] font-medium hover:underline">
+          <Link href="/sign-in" className="text-[#3a8ea6] font-medium hover:underline">
             Sign in
           </Link>
         </p>

@@ -29,7 +29,7 @@ export default function Landing() {
           </Link>
           <Link
             href="/sign-up"
-            className="text-sm font-medium text-white bg-[#2d7d6f] hover:bg-[#236158] transition-colors px-4 py-2 rounded-md"
+            className="text-sm font-medium text-white bg-[#3a8ea6] hover:bg-[#2d7a95] transition-colors px-4 py-2 rounded-md"
           >
             Sign up
           </Link>
@@ -56,7 +56,7 @@ export default function Landing() {
             <div className="flex items-center gap-3 pt-1">
               <Link
                 href="/sign-up"
-                className="inline-block text-sm font-medium text-white bg-[#2d7d6f] hover:bg-[#236158] transition-colors px-5 py-2.5 rounded-md"
+                className="inline-block text-sm font-medium text-white bg-[#3a8ea6] hover:bg-[#2d7a95] transition-colors px-5 py-2.5 rounded-md"
               >
                 Create your account
               </Link>
