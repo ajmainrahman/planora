@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { useLocation } from "wouter";
+import { createContext, useContext, type ReactNode } from "react";
 
 interface AuthUser {
   userId: number;
@@ -8,51 +7,24 @@ interface AuthUser {
 }
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: AuthUser;
   loading: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
+const defaultUser: AuthUser = { userId: 1, name: "Guest", email: "guest@planora.app" };
+
 const AuthContext = createContext<AuthContextValue>({
-  user: null,
-  loading: true,
+  user: defaultUser,
+  loading: false,
   signOut: async () => {},
   refresh: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [, setLocation] = useLocation();
-
-  const fetchMe = async () => {
-    try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      if (res.ok) {
-        setUser(await res.json());
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMe();
-  }, []);
-
-  const signOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    setUser(null);
-    setLocation("/");
-  };
-
   return (
-    <AuthContext.Provider value={{ user, loading, signOut, refresh: fetchMe }}>
+    <AuthContext.Provider value={{ user: defaultUser, loading: false, signOut: async () => {}, refresh: async () => {} }}>
       {children}
     </AuthContext.Provider>
   );
