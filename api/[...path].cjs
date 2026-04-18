@@ -1,9 +1,10 @@
-let app;
-
 module.exports = async (req, res) => {
-  if (!app) {
+  try {
     const mod = await import('../artifacts/api-server/dist/app.mjs');
-    app = mod.default;
+    const app = mod.default;
+    return app(req, res);
+  } catch (err) {
+    console.error('App load error:', err);
+    res.status(500).json({ error: err.message });
   }
-  return app(req, res);
 };
