@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, X, LayoutGrid, List, Bookmark } from "lucide-react";
+import { Search, Star, X, LayoutGrid, List, Bookmark, Lightbulb } from "lucide-react";
 import type { Idea } from "@workspace/api-client-react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 
@@ -84,7 +84,9 @@ export function IdeaBoard() {
   if (!ideas || ideas.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed bg-card/60 p-10 text-center">
-        <span className="text-4xl">💡</span>
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Lightbulb className="h-6 w-6" />
+        </div>
         <h3 className="mt-4 font-serif text-2xl font-medium text-foreground">The board is empty</h3>
         <p className="mt-2 text-sm text-muted-foreground">Plant your first seed to start growing your ideas.</p>
       </div>

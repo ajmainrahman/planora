@@ -1,5 +1,6 @@
-import { desc, eq } from "drizzle-orm";
-import { Router, type IRouter } from "express";
+import { getAuth } from "@clerk/express";
+import { and, desc, eq } from "drizzle-orm";
+import { Router, type IRouter, type NextFunction, type Request, type Response } from "express";
 import {
   CreateIdeaBody,
   CreateProgressNoteBody,
@@ -30,7 +31,22 @@ import {
 
 const router: IRouter = Router();
 const statuses = ["seed", "planning", "building", "shared"] as const;
-let seedDataPromise: Promise<void> | null = null;
+const seedDataPromises = new Map<string, Promise<void>>();
+
+type AuthenticatedRequest = Request & { userId: string };
+
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  const auth = getAuth(req);
+  const userId = auth.userId ?? (auth.sessionClaims as { userId?: string } | undefined)?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  (req as AuthenticatedRequest).userId = userId;
+  next();
+};
 
 const toIdeaResponse = (idea: Idea) => ({
   id: idea.id,
@@ -162,8 +178,12 @@ const summarizeProgress = (dailyTotal: number, weeklyTotal: number, sharedIdeas:
       : "Mark an idea as shared to add it to your public portfolio.",
 });
 
-async function seedDataIfEmpty(): Promise<void> {
-  const existing = await db.select({ id: ideasTable.id }).from(ideasTable).limit(1);
+async function seedDataIfEmpty(userId: string): Promise<void> {
+  const existing = await db
+    .select({ id: ideasTable.id })
+    .from(ideasTable)
+    .where(eq(ideasTable.ownerId, userId))
+    .limit(1);
 
   if (existing.length > 0) {
     return;
@@ -173,6 +193,7 @@ async function seedDataIfEmpty(): Promise<void> {
     .insert(ideasTable)
     .values([
       {
+        ownerId: userId,
         title: "Build a weekly idea studio",
         description:
           "Create a repeatable weekly ritual to collect sparks, choose one promising idea, and turn it into a concrete experiment.",
@@ -184,6 +205,7 @@ async function seedDataIfEmpty(): Promise<void> {
         reminderAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       },
       {
+        ownerId: userId,
         title: "Publish tiny progress notes",
         description:
           "Share concise updates that show what changed, what was learned, and what is next without needing a polished final result.",
@@ -195,6 +217,7 @@ async function seedDataIfEmpty(): Promise<void> {
         reminderAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
       },
       {
+        ownerId: userId,
         title: "Collect rough product thoughts",
         description:
           "Keep a backlog of rough opportunities, inspirations, and half-formed questions before judging whether they are worth building.",
@@ -234,291 +257,28 @@ async function seedDataIfEmpty(): Promise<void> {
   ]);
 }
 
-async function ensureSeedData(): Promise<void> {
-  seedDataPromise ??= seedDataIfEmpty();
-  await seedDataPromise;
+async function ensureSeedData(userId: string): Promise<void> {
+  if (!seedDataPromises.has(userId)) {
+    seedDataPromises.set(userId, seedDataIfEmpty(userId));
+  }
+  await seedDataPromises.get(userId);
 }
 
-router.get("/ideas", async (_req, res): Promise<void> => {
-  await ensureSeedData();
-  const ideas = await db.select().from(ideasTable).orderBy(desc(ideasTable.updatedAt));
-  res.json(ListIdeasResponse.parse(ideas.map(toIdeaResponse)));
-});
-
-router.post("/ideas", async (req, res): Promise<void> => {
-  const parsed = CreateIdeaBody.safeParse(req.body);
-
-  if (!parsed.success) {
-    req.log.warn({ errors: parsed.error.message }, "Invalid idea create body");
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const [idea] = await db.insert(ideasTable).values(parsed.data).returning();
-
-  if (!idea) {
-    res.status(500).json({ error: "Unable to create idea" });
-    return;
-  }
-
-  res.status(201).json(UpdateIdeaResponse.parse(toIdeaResponse(idea)));
-});
-
-router.get("/ideas/:id", async (req, res): Promise<void> => {
-  await ensureSeedData();
-  const params = GetIdeaParams.safeParse(req.params);
-
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const [idea] = await db
-    .select()
-    .from(ideasTable)
-    .where(eq(ideasTable.id, params.data.id));
-
-  if (!idea) {
-    res.status(404).json({ error: "Idea not found" });
-    return;
-  }
-
-  const notes = await db
-    .select()
-    .from(progressNotesTable)
-    .where(eq(progressNotesTable.ideaId, params.data.id))
-    .orderBy(desc(progressNotesTable.createdAt));
-
-  res.json(
-    GetIdeaResponse.parse({
-      ...toIdeaResponse(idea),
-      progressNotes: notes.map(toProgressResponse),
-    }),
-  );
-});
-
-router.patch("/ideas/:id", async (req, res): Promise<void> => {
-  const params = UpdateIdeaParams.safeParse(req.params);
-  const body = UpdateIdeaBody.safeParse(req.body);
-
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  if (!body.success) {
-    req.log.warn({ errors: body.error.message }, "Invalid idea update body");
-    res.status(400).json({ error: body.error.message });
-    return;
-  }
-
-  if (Object.keys(body.data).length === 0) {
-    res.status(400).json({ error: "At least one field is required" });
-    return;
-  }
-
-  const [idea] = await db
-    .update(ideasTable)
-    .set({ ...body.data, updatedAt: new Date() })
-    .where(eq(ideasTable.id, params.data.id))
-    .returning();
-
-  if (!idea) {
-    res.status(404).json({ error: "Idea not found" });
-    return;
-  }
-
-  res.json(UpdateIdeaResponse.parse(toIdeaResponse(idea)));
-});
-
-router.delete("/ideas/:id", async (req, res): Promise<void> => {
-  const params = DeleteIdeaParams.safeParse(req.params);
-
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const deleted = await db
-    .delete(ideasTable)
-    .where(eq(ideasTable.id, params.data.id))
-    .returning({ id: ideasTable.id });
-
-  if (deleted.length === 0) {
-    res.status(404).json({ error: "Idea not found" });
-    return;
-  }
-
-  res.status(204).send();
-});
-
-router.get("/ideas/:id/progress", async (req, res): Promise<void> => {
-  await ensureSeedData();
-  const params = ListProgressNotesParams.safeParse(req.params);
-
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const notes = await db
-    .select()
-    .from(progressNotesTable)
-    .where(eq(progressNotesTable.ideaId, params.data.id))
-    .orderBy(desc(progressNotesTable.createdAt));
-
-  res.json(ListProgressNotesResponse.parse(notes.map(toProgressResponse)));
-});
-
-router.post("/ideas/:id/progress", async (req, res): Promise<void> => {
-  const params = CreateProgressNoteParams.safeParse(req.params);
-  const body = CreateProgressNoteBody.safeParse(req.body);
-
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  if (!body.success) {
-    req.log.warn({ errors: body.error.message }, "Invalid progress note body");
-    res.status(400).json({ error: body.error.message });
-    return;
-  }
-
-  const [idea] = await db
-    .select({ id: ideasTable.id })
-    .from(ideasTable)
-    .where(eq(ideasTable.id, params.data.id));
-
-  if (!idea) {
-    res.status(404).json({ error: "Idea not found" });
-    return;
-  }
-
-  const [note] = await db
-    .insert(progressNotesTable)
-    .values({ ...body.data, ideaId: params.data.id })
-    .returning();
-
-  await db
-    .update(ideasTable)
-    .set({ updatedAt: new Date() })
-    .where(eq(ideasTable.id, params.data.id));
-
-  if (!note) {
-    res.status(500).json({ error: "Unable to create progress note" });
-    return;
-  }
-
-  res.status(201).json(toProgressResponse(note));
-});
-
-router.get("/dashboard", async (_req, res): Promise<void> => {
-  await ensureSeedData();
-  const ideas = await db.select().from(ideasTable);
-  const notes = await db.select({ id: progressNotesTable.id }).from(progressNotesTable);
-  const statusCounts = statuses.map((status) => ({
-    status,
-    count: ideas.filter((idea) => idea.status === status).length,
-  }));
-
-  res.json(
-    GetDashboardResponse.parse({
-      totalIdeas: ideas.length,
-      activeIdeas: ideas.filter((idea) => idea.status !== "shared").length,
-      sharedIdeas: ideas.filter((idea) => idea.status === "shared").length,
-      progressNotes: notes.length,
-      statusCounts,
-    }),
-  );
-});
-
-router.get("/activity", async (_req, res): Promise<void> => {
-  await ensureSeedData();
-  const ideas = await db.select().from(ideasTable);
-  const notes = await db
+async function getUserProgressNotes(userId: string): Promise<ProgressNote[]> {
+  return db
     .select({
       id: progressNotesTable.id,
       ideaId: progressNotesTable.ideaId,
       content: progressNotesTable.content,
       mood: progressNotesTable.mood,
       createdAt: progressNotesTable.createdAt,
-      ideaTitle: ideasTable.title,
     })
     .from(progressNotesTable)
-    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id));
-
-  const activity = [
-    ...ideas.map((idea) => ({
-      id: `idea-created-${idea.id}`,
-      type: "idea_created" as const,
-      title: idea.title,
-      detail: `Added to ${idea.category}`,
-      createdAt: idea.createdAt,
-    })),
-    ...ideas
-      .filter((idea) => idea.updatedAt.getTime() !== idea.createdAt.getTime())
-      .map((idea) => ({
-        id: `idea-updated-${idea.id}`,
-        type: "idea_updated" as const,
-        title: idea.title,
-        detail: `Moved forward: ${idea.nextStep}`,
-        createdAt: idea.updatedAt,
-      })),
-    ...notes.map((note) => ({
-      id: `progress-${note.id}`,
-      type: "progress_added" as const,
-      title: note.ideaTitle,
-      detail: note.content,
-      createdAt: note.createdAt,
-    })),
-  ]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 12);
-
-  res.json(ListActivityResponse.parse(activity));
-});
-
-router.get("/progress-summary", async (_req, res): Promise<void> => {
-  await ensureSeedData();
-  const ideas = await db.select().from(ideasTable);
-  const notes = await db.select().from(progressNotesTable);
-  const daily = buildDailyBuckets(ideas, notes);
-  const weekly = buildWeeklyBuckets(ideas, notes);
-  const dailyTotal = daily.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
-  const weeklyTotal = weekly.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
-  const sharedIdeas = ideas.filter((idea) => idea.status === "shared").length;
-  const summaries = summarizeProgress(dailyTotal, weeklyTotal, sharedIdeas);
-
-  res.json(
-    GetProgressSummaryResponse.parse({
-      daily,
-      weekly,
-      dailySummary: summaries.dailySummary,
-      weeklySummary: summaries.weeklySummary,
-      metrics: [
-        {
-          label: "7-day momentum",
-          value: dailyTotal,
-          detail: "Ideas, notes, and shares recorded this week",
-        },
-        {
-          label: "6-week output",
-          value: weeklyTotal,
-          detail: "Research actions across your recent archive",
-        },
-        {
-          label: "Share-ready",
-          value: sharedIdeas,
-          detail: summaries.sharedSummary,
-        },
-      ],
-    }),
-  );
-});
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(eq(ideasTable.ownerId, userId));
+}
 
 router.get("/share", async (_req, res): Promise<void> => {
-  await ensureSeedData();
   const sharedIdeas = await db
     .select()
     .from(ideasTable)
@@ -561,7 +321,6 @@ router.get("/share", async (_req, res): Promise<void> => {
 });
 
 router.get("/share/:id", async (req, res): Promise<void> => {
-  await ensureSeedData();
   const params = GetPublicIdeaParams.safeParse(req.params);
 
   if (!params.success) {
@@ -586,6 +345,315 @@ router.get("/share/:id", async (req, res): Promise<void> => {
     .orderBy(desc(progressNotesTable.createdAt));
 
   res.json(GetPublicIdeaResponse.parse(toPublicIdeaResponse(idea, notes)));
+});
+
+router.use(requireAuth);
+
+router.get("/ideas", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const ideas = await db
+    .select()
+    .from(ideasTable)
+    .where(eq(ideasTable.ownerId, userId))
+    .orderBy(desc(ideasTable.updatedAt));
+  res.json(ListIdeasResponse.parse(ideas.map(toIdeaResponse)));
+});
+
+router.post("/ideas", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const parsed = CreateIdeaBody.safeParse(req.body);
+
+  if (!parsed.success) {
+    req.log.warn({ errors: parsed.error.message }, "Invalid idea create body");
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [idea] = await db.insert(ideasTable).values({ ...parsed.data, ownerId: userId }).returning();
+
+  if (!idea) {
+    res.status(500).json({ error: "Unable to create idea" });
+    return;
+  }
+
+  res.status(201).json(UpdateIdeaResponse.parse(toIdeaResponse(idea)));
+});
+
+router.get("/ideas/:id", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const params = GetIdeaParams.safeParse(req.params);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [idea] = await db
+    .select()
+    .from(ideasTable)
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+
+  const notes = await db
+    .select()
+    .from(progressNotesTable)
+    .where(eq(progressNotesTable.ideaId, params.data.id))
+    .orderBy(desc(progressNotesTable.createdAt));
+
+  res.json(
+    GetIdeaResponse.parse({
+      ...toIdeaResponse(idea),
+      progressNotes: notes.map(toProgressResponse),
+    }),
+  );
+});
+
+router.patch("/ideas/:id", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const params = UpdateIdeaParams.safeParse(req.params);
+  const body = UpdateIdeaBody.safeParse(req.body);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  if (!body.success) {
+    req.log.warn({ errors: body.error.message }, "Invalid idea update body");
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  if (Object.keys(body.data).length === 0) {
+    res.status(400).json({ error: "At least one field is required" });
+    return;
+  }
+
+  const [idea] = await db
+    .update(ideasTable)
+    .set({ ...body.data, updatedAt: new Date() })
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)))
+    .returning();
+
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+
+  res.json(UpdateIdeaResponse.parse(toIdeaResponse(idea)));
+});
+
+router.delete("/ideas/:id", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const params = DeleteIdeaParams.safeParse(req.params);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const deleted = await db
+    .delete(ideasTable)
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)))
+    .returning({ id: ideasTable.id });
+
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+
+  res.status(204).send();
+});
+
+router.get("/ideas/:id/progress", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const params = ListProgressNotesParams.safeParse(req.params);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [idea] = await db
+    .select({ id: ideasTable.id })
+    .from(ideasTable)
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+
+  const notes = await db
+    .select()
+    .from(progressNotesTable)
+    .where(eq(progressNotesTable.ideaId, params.data.id))
+    .orderBy(desc(progressNotesTable.createdAt));
+
+  res.json(ListProgressNotesResponse.parse(notes.map(toProgressResponse)));
+});
+
+router.post("/ideas/:id/progress", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const params = CreateProgressNoteParams.safeParse(req.params);
+  const body = CreateProgressNoteBody.safeParse(req.body);
+
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  if (!body.success) {
+    req.log.warn({ errors: body.error.message }, "Invalid progress note body");
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const [idea] = await db
+    .select({ id: ideasTable.id })
+    .from(ideasTable)
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+
+  const [note] = await db
+    .insert(progressNotesTable)
+    .values({ ...body.data, ideaId: params.data.id })
+    .returning();
+
+  await db
+    .update(ideasTable)
+    .set({ updatedAt: new Date() })
+    .where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+
+  if (!note) {
+    res.status(500).json({ error: "Unable to create progress note" });
+    return;
+  }
+
+  res.status(201).json(toProgressResponse(note));
+});
+
+router.get("/dashboard", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
+  const notes = await db
+    .select({ id: progressNotesTable.id })
+    .from(progressNotesTable)
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(eq(ideasTable.ownerId, userId));
+  const statusCounts = statuses.map((status) => ({
+    status,
+    count: ideas.filter((idea) => idea.status === status).length,
+  }));
+
+  res.json(
+    GetDashboardResponse.parse({
+      totalIdeas: ideas.length,
+      activeIdeas: ideas.filter((idea) => idea.status !== "shared").length,
+      sharedIdeas: ideas.filter((idea) => idea.status === "shared").length,
+      progressNotes: notes.length,
+      statusCounts,
+    }),
+  );
+});
+
+router.get("/activity", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
+  const notes = await db
+    .select({
+      id: progressNotesTable.id,
+      ideaId: progressNotesTable.ideaId,
+      content: progressNotesTable.content,
+      mood: progressNotesTable.mood,
+      createdAt: progressNotesTable.createdAt,
+      ideaTitle: ideasTable.title,
+    })
+    .from(progressNotesTable)
+    .innerJoin(ideasTable, eq(progressNotesTable.ideaId, ideasTable.id))
+    .where(eq(ideasTable.ownerId, userId));
+
+  const activity = [
+    ...ideas.map((idea) => ({
+      id: `idea-created-${idea.id}`,
+      type: "idea_created" as const,
+      title: idea.title,
+      detail: `Added to ${idea.category}`,
+      createdAt: idea.createdAt,
+    })),
+    ...ideas
+      .filter((idea) => idea.updatedAt.getTime() !== idea.createdAt.getTime())
+      .map((idea) => ({
+        id: `idea-updated-${idea.id}`,
+        type: "idea_updated" as const,
+        title: idea.title,
+        detail: `Moved forward: ${idea.nextStep}`,
+        createdAt: idea.updatedAt,
+      })),
+    ...notes.map((note) => ({
+      id: `progress-${note.id}`,
+      type: "progress_added" as const,
+      title: note.ideaTitle,
+      detail: note.content,
+      createdAt: note.createdAt,
+    })),
+  ]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 12);
+
+  res.json(ListActivityResponse.parse(activity));
+});
+
+router.get("/progress-summary", async (req, res): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).userId;
+  await ensureSeedData(userId);
+  const ideas = await db.select().from(ideasTable).where(eq(ideasTable.ownerId, userId));
+  const notes = await getUserProgressNotes(userId);
+  const daily = buildDailyBuckets(ideas, notes);
+  const weekly = buildWeeklyBuckets(ideas, notes);
+  const dailyTotal = daily.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
+  const weeklyTotal = weekly.reduce((sum, bucket) => sum + bucket.totalActivity, 0);
+  const sharedIdeas = ideas.filter((idea) => idea.status === "shared").length;
+  const summaries = summarizeProgress(dailyTotal, weeklyTotal, sharedIdeas);
+
+  res.json(
+    GetProgressSummaryResponse.parse({
+      daily,
+      weekly,
+      dailySummary: summaries.dailySummary,
+      weeklySummary: summaries.weeklySummary,
+      metrics: [
+        {
+          label: "7-day momentum",
+          value: dailyTotal,
+          detail: "Ideas, notes, and shares recorded this week",
+        },
+        {
+          label: "6-week output",
+          value: weeklyTotal,
+          detail: "Research actions across your recent archive",
+        },
+        {
+          label: "Share-ready",
+          value: sharedIdeas,
+          detail: summaries.sharedSummary,
+        },
+      ],
+    }),
+  );
 });
 
 export default router;

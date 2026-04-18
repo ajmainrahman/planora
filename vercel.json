@@ -4,7 +4,12 @@
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/api/dashboard", "dest": "/api/dashboard.js" },
+    { "src": "/api/activity", "dest": "/api/activity.js" },
+    { "src": "/api/ideas/([^/]+)/progress", "dest": "/api/ideas/[id]/progress.js" },
+    { "src": "/api/ideas/([^/]+)", "dest": "/api/ideas/[id].js" },
+    { "src": "/api/ideas", "dest": "/api/ideas.js" },
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

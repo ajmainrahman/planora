@@ -17,6 +17,7 @@ export const ideaPriorityEnum = pgEnum("idea_priority", [
 
 export const ideasTable = pgTable("ideas", {
   id: serial("id").primaryKey(),
+  ownerId: text("owner_id"),
   title: text("title").notNull(),
   description: text("description").notNull(),
   status: ideaStatusEnum("status").notNull().default("seed"),
@@ -34,6 +35,7 @@ export const ideasTable = pgTable("ideas", {
 
 export const insertIdeaSchema = createInsertSchema(ideasTable).omit({
   id: true,
+  ownerId: true,
   createdAt: true,
   updatedAt: true,
 });
