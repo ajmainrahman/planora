@@ -9,3 +9,4 @@ if (stored === "dark" || (!stored && prefersDark)) {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+ 
