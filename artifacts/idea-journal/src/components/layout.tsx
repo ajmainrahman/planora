@@ -33,7 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-3 group transition-opacity hover:opacity-80 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-3 group transition-opacity hover:opacity-80 shrink-0">
               <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground shadow-sm flex items-center justify-center">
                 <svg viewBox="0 0 36 36" className="h-6 w-6" aria-hidden="true">
                   <path d="M10 27V9h10.2c4.1 0 7 2.7 7 6.6 0 3.8-2.9 6.5-7 6.5h-5.1V27H10Z" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round" />
