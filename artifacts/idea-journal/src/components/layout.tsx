@@ -23,10 +23,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="hidden text-xs font-medium text-muted-foreground sm:block">Ideas into motion</span>
             </div>
           </Link>
+
           <div className="flex items-center gap-3">
-            <span className="hidden rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm sm:block">
+            <div className="hidden rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm sm:block">
               Plan. Journal. Share.
-            </span>
+            </div>
             <Button
               variant="ghost"
               size="icon"
