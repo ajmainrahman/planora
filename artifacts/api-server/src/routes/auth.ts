@@ -1,22 +1,18 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
-import { user as users } from "@workspace/db/schema";
+import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  sessionMiddleware,
-  requireAuth,
-  setSessionCookie,
-  clearSessionCookie,
-} from "../middleware/session.js";
+import { setSession, clearSession, requireAuth } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.get("/me", sessionMiddleware, requireAuth, (req, res) => {
-  const u = req.sessionUser!;
-  res.json({ id: u.id, email: u.email, name: u.name });
+// GET /api/auth/me
+router.get("/me", requireAuth, (req, res) => {
+  res.json(req.sessionUser);
 });
 
+// POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body as {
@@ -38,7 +34,7 @@ router.post("/register", async (req, res) => {
       .insert(usersTable)
       .values({ name, email, password_hash })
       .returning({ id: usersTable.id, email: usersTable.email, name: usersTable.name });
-    setSessionCookie(res, user);
+    await setSession(res, { userId: user.id, name: user.name, email: user.email });
     res.status(201).json({ id: user.id, email: user.email, name: user.name });
   } catch (err) {
     console.error("register error", err);
@@ -46,6 +42,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body as { email?: string; password?: string };
@@ -63,7 +60,7 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
-    setSessionCookie(res, { id: user.id, email: user.email, name: user.name });
+    await setSession(res, { userId: user.id, name: user.name, email: user.email });
     res.json({ id: user.id, email: user.email, name: user.name });
   } catch (err) {
     console.error("login error", err);
@@ -71,8 +68,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// POST /api/auth/logout
 router.post("/logout", (_req, res) => {
-  clearSessionCookie(res);
+  clearSession(res);
   res.json({ ok: true });
 });
 
