@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
-import { users } from "@workspace/db/schema";
+import { user as users } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import {
   sessionMiddleware,
@@ -28,16 +28,16 @@ router.post("/register", async (req, res) => {
       res.status(400).json({ error: "name, email and password are required" });
       return;
     }
-    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
     if (existing.length > 0) {
       res.status(409).json({ error: "Email already registered" });
       return;
     }
     const password_hash = await bcrypt.hash(password, 12);
     const [user] = await db
-      .insert(users)
+      .insert(usersTable)
       .values({ name, email, password_hash })
-      .returning({ id: users.id, email: users.email, name: users.name });
+      .returning({ id: usersTable.id, email: usersTable.email, name: usersTable.name });
     setSessionCookie(res, user);
     res.status(201).json({ id: user.id, email: user.email, name: user.name });
   } catch (err) {
@@ -53,7 +53,7 @@ router.post("/login", async (req, res) => {
       res.status(400).json({ error: "email and password are required" });
       return;
     }
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
     if (!user) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
