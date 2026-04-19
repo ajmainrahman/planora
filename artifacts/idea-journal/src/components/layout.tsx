@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid } from "lucide-react";
+import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { SearchDialog } from "@/components/search-dialog";
 import { PlanoraLogo } from "@/components/planora-logo";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const [location] = useLocation();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -67,6 +69,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle dark mode" className="rounded-full">
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+            {user && (
+              <div className="flex items-center gap-2 pl-2 border-l border-border/50">
+                <span className="hidden sm:block text-sm text-muted-foreground max-w-[120px] truncate">
+                  {user.name}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={signOut}
+                  className="rounded-full text-muted-foreground hover:text-red-500"
+                  title="Sign out"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         <nav className="md:hidden flex items-center gap-1 px-4 pb-2 border-t pt-2 overflow-x-auto">
