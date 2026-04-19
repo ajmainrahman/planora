@@ -1,3 +1,18 @@
+const { Pool } = require('pg');
+const { drizzle } = require('drizzle-orm/node-postgres');
+const { pgTable, serial, text, timestamp } = require('drizzle-orm/pg-core');
+const { eq } = require('drizzle-orm');
+const bcrypt = require('bcryptjs');
+const { signJWT } = require('./_jwt');
+
+const usersTable = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -9,17 +24,6 @@ module.exports = async (req, res) => {
 
   let step = 'start';
   try {
-    step = 'require-pg';
-    const { Pool } = require('pg');
-    step = 'require-drizzle';
-    const { drizzle } = require('drizzle-orm/node-postgres');
-    const { pgTable, serial, text, timestamp } = require('drizzle-orm/pg-core');
-    const { eq } = require('drizzle-orm');
-    step = 'require-bcrypt';
-    const bcrypt = require('bcryptjs');
-    step = 'require-jose';
-    const { SignJWT } = require('jose');
-
     step = 'read-body';
     const { email, password } = req.body || {};
     if (!email || !password)
@@ -30,17 +34,12 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'DATABASE_URL not set' });
 
     step = 'connect-db';
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1, ssl: { rejectUnauthorized: false } });
-    const db = drizzle(pool);
-
-    step = 'define-table';
-    const usersTable = pgTable('users', {
-      id: serial('id').primaryKey(),
-      name: text('name').notNull(),
-      email: text('email').notNull(),
-      passwordHash: text('password_hash').notNull(),
-      createdAt: timestamp('created_at').defaultNow().notNull(),
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 1,
+      ssl: { rejectUnauthorized: false },
     });
+    const db = drizzle(pool);
 
     step = 'find-user';
     const rows = await db.select().from(usersTable)
@@ -53,14 +52,7 @@ module.exports = async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid email or password.' });
 
     step = 'create-token';
-    const secret = new TextEncoder().encode(
-      process.env.SESSION_SECRET || 'planora-dev-secret-change-in-production'
-    );
-    const token = await new SignJWT({ userId: user.id, name: user.name, email: user.email })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('30d')
-      .sign(secret);
+    const token = signJWT({ userId: user.id, name: user.name, email: user.email });
 
     res.setHeader('Set-Cookie',
       `planora_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}; Secure`
@@ -69,6 +61,6 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error(`[login] failed at step "${step}":`, err);
-    return res.status(500).json({ error: err.message || 'Internal server error', step, code: err.code });
+    return res.status(500).json({ error: err.message || 'Internal server error', step });
   }
 };

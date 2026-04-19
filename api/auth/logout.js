@@ -6,6 +6,8 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  res.setHeader('Set-Cookie', 'planora_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure');
+  res.setHeader('Set-Cookie',
+    'planora_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure'
+  );
   return res.status(200).json({ ok: true });
 };

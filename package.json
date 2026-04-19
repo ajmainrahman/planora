@@ -3,10 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@vercel/node": "^5.7.7",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
-    "jose": "^6.2.2",
     "pg": "^8.11.0"
   }
 }
