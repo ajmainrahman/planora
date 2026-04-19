@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +12,6 @@ import CalendarPage from "@/pages/calendar";
 import WeeklyReviewPage from "@/pages/weekly-review";
 import SignIn from "@/pages/sign-in";
 import SignUp from "@/pages/sign-up";
-import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,40 +22,48 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/sign-in");
-    }
-  }, [user, loading, setLocation]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-  return <Component />;
+// Spinner shown while checking session
+function Spinner() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 }
 
-function Router() {
+// All routing lives inside AuthProvider so useAuth always has context
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <Spinner />;
+
   return (
     <Switch>
+      {/* Public auth routes */}
       <Route path="/sign-in" component={SignIn} />
       <Route path="/sign-up" component={SignUp} />
-      <Route path="/" component={() => <ProtectedRoute component={Home} />} />
-      <Route path="/dashboard" component={() => <ProtectedRoute component={Home} />} />
-      <Route path="/ideas/:id" component={() => <ProtectedRoute component={IdeaDetail} />} />
-      <Route path="/calendar" component={() => <ProtectedRoute component={CalendarPage} />} />
-      <Route path="/weekly-review" component={() => <ProtectedRoute component={WeeklyReviewPage} />} />
+
+      {/* Public share routes */}
       <Route path="/share" component={PublicPortfolio} />
       <Route path="/share/:id" component={PublicIdea} />
+
+      {/* Protected routes — redirect to /sign-in if not logged in */}
+      <Route path="/">
+        {user ? <Home /> : <Redirect to="/sign-in" />}
+      </Route>
+      <Route path="/dashboard">
+        {user ? <Home /> : <Redirect to="/sign-in" />}
+      </Route>
+      <Route path="/ideas/:id">
+        {user ? <IdeaDetail /> : <Redirect to="/sign-in" />}
+      </Route>
+      <Route path="/calendar">
+        {user ? <CalendarPage /> : <Redirect to="/sign-in" />}
+      </Route>
+      <Route path="/weekly-review">
+        {user ? <WeeklyReviewPage /> : <Redirect to="/sign-in" />}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -68,7 +75,7 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
-            <Router />
+            <AppRoutes />
           </AuthProvider>
         </WouterRouter>
         <Toaster />
