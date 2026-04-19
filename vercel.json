@@ -3,12 +3,8 @@
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/idea-journal run build",
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
-  "functions": {
-    "api/index.js": { "maxDuration": 30 }
-  },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.js" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
