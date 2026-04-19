@@ -1,2 +1,2 @@
-import app from "../artifacts/api-server/dist/app.mjs";
-export default app;
+const app = require("../artifacts/api-server/dist/app.cjs");
+module.exports = app;
