@@ -1,3 +1,10 @@
 module.exports = async (req, res) => {
-  res.status(404).json({ error: 'Not found' });
+  try {
+    const mod = await import('../artifacts/api-server/dist/app.mjs');
+    const app = mod.default;
+    return app(req, res);
+  } catch (err) {
+    console.error('App load error:', err);
+    res.status(500).json({ error: err.message });
+  }
 };

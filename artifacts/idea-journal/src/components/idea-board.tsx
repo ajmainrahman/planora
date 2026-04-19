@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Star, X, LayoutGrid, List, Bookmark } from "lucide-react";
 import type { Idea } from "@workspace/api-client-react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { useAuth } from "@/contexts/auth-context";
 
 const statusLanes = [
   { value: "seed", label: "Seed" },
@@ -27,9 +26,8 @@ export function IdeaBoard() {
   const [highPriorityOnly, setHighPriorityOnly] = useState(false);
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("feed");
-  const { user } = useAuth();
   const { data: ideas, isLoading } = useListIdeas({
-    query: { queryKey: getListIdeasQueryKey(), enabled: !!user }
+    query: { queryKey: getListIdeasQueryKey() }
   });
   const { isBookmarked } = useBookmarks();
 

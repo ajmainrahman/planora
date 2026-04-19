@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, BookOpen, Lightbulb, CheckCircle2, Tag, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
 
 interface WeeklyReviewData {
   weekStart: string;
@@ -29,12 +28,11 @@ interface WeeklyReviewData {
   allTags: string[];
 }
 
-function useWeeklyReview(weekStart: string, enabled: boolean) {
+function useWeeklyReview(weekStart: string) {
   return useQuery<WeeklyReviewData>({
     queryKey: ["/api/weekly-review", weekStart],
-    enabled,
     queryFn: async () => {
-      const res = await fetch(`/api/weekly-review?week=${weekStart}`, { credentials: "include" });
+      const res = await fetch(`/api/weekly-review?week=${weekStart}`);
       if (!res.ok) throw new Error("Failed to fetch weekly review");
       return res.json();
     },
@@ -53,8 +51,7 @@ const stripHtml = (html: string) => html.replace(/<[^>]+>/g, "");
 export default function WeeklyReviewPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = format(startOfWeek(subWeeks(new Date(), weekOffset)), "yyyy-MM-dd");
-  const { user } = useAuth();
-  const { data, isLoading } = useWeeklyReview(weekStart, !!user);
+  const { data, isLoading } = useWeeklyReview(weekStart);
 
   const weekLabel = data
     ? `${format(parseISO(data.weekStart), "MMM d")} – ${format(parseISO(data.weekEnd), "MMM d, yyyy")}`

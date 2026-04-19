@@ -30,7 +30,7 @@ function useSearch(q: string) {
     queryKey: ["/api/search", q],
     queryFn: async () => {
       if (!q.trim()) return { ideas: [], notes: [] };
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { credentials: "include" });
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       if (!res.ok) throw new Error("Search failed");
       return res.json();
     },

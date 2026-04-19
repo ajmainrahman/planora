@@ -23,7 +23,7 @@ router.post("/register", async (req, res) => {
   }
   const passwordHash = await bcrypt.hash(password, 12);
   const [user] = await db.insert(usersTable).values({ name: name.trim(), email: email.toLowerCase(), passwordHash }).returning();
-  await setSession(res, { userId: user.id, name: user.name, email: user.email });
+  setSession(res, { userId: user.id, name: user.name, email: user.email });
   res.status(201).json({ id: user.id, name: user.name, email: user.email });
 });
 
@@ -43,17 +43,17 @@ router.post("/login", async (req, res) => {
     res.status(401).json({ error: "Invalid email or password." });
     return;
   }
-  await setSession(res, { userId: user.id, name: user.name, email: user.email });
+  setSession(res, { userId: user.id, name: user.name, email: user.email });
   res.json({ id: user.id, name: user.name, email: user.email });
 });
 
-router.post("/logout", async (_req, res) => {
+router.post("/logout", (_req, res) => {
   clearSession(res);
   res.json({ ok: true });
 });
 
-router.get("/me", async (req, res) => {
-  const session = await parseSession(req);
+router.get("/me", (req, res) => {
+  const session = parseSession(req);
   if (!session) {
     res.status(401).json({ error: "Not signed in." });
     return;

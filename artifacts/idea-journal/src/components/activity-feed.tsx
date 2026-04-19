@@ -4,16 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, TrendingUp, Zap, PlusCircle, Edit3, MessageSquare } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityItem } from "@workspace/api-client-react";
-import { useAuth } from "@/contexts/auth-context";
 
 export function ActivityFeed() {
-  const { user } = useAuth();
   const { data: activity, isLoading: isActivityLoading } = useListActivity({
-    query: { queryKey: getListActivityQueryKey(), enabled: !!user }
+    query: { queryKey: getListActivityQueryKey() }
   });
 
   const { data: summary, isLoading: isSummaryLoading } = useGetProgressSummary({
-    query: { queryKey: getGetProgressSummaryQueryKey(), enabled: !!user }
+    query: { queryKey: getGetProgressSummaryQueryKey() }
   });
 
   if (isActivityLoading || isSummaryLoading) {

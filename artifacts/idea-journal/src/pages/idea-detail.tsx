@@ -21,7 +21,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/contexts/auth-context";
 
 export default function IdeaDetail() {
   const [, params] = useRoute("/ideas/:id");
@@ -29,10 +28,9 @@ export default function IdeaDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useRoute("/");
-  const { user } = useAuth();
 
   const { data: idea, isLoading } = useGetIdea(ideaId, {
-    query: { enabled: !!ideaId && !!user, queryKey: getGetIdeaQueryKey(ideaId) }
+    query: { enabled: !!ideaId, queryKey: getGetIdeaQueryKey(ideaId) }
   });
 
   const updateIdea = useUpdateIdea();

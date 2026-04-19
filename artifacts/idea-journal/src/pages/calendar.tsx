@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, CalendarDays, BookOpen, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
 
 interface CalendarEntry {
   date: string;
@@ -16,12 +15,11 @@ interface CalendarEntry {
   notes: Array<{ id: number; ideaId: number; ideaTitle: string; content: string; mood: string }>;
 }
 
-function useCalendarData(month: string, enabled: boolean) {
+function useCalendarData(month: string) {
   return useQuery<CalendarEntry[]>({
     queryKey: ["/api/calendar", month],
-    enabled,
     queryFn: async () => {
-      const res = await fetch(`/api/calendar?month=${month}`, { credentials: "include" });
+      const res = await fetch(`/api/calendar?month=${month}`);
       if (!res.ok) throw new Error("Failed to fetch calendar");
       return res.json();
     },
@@ -31,8 +29,7 @@ function useCalendarData(month: string, enabled: boolean) {
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const monthStr = format(currentDate, "yyyy-MM");
-  const { user } = useAuth();
-  const { data: entries, isLoading } = useCalendarData(monthStr, !!user);
+  const { data: entries, isLoading } = useCalendarData(monthStr);
   const [selected, setSelected] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentDate);

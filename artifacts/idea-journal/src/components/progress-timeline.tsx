@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Controller } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Hash, X, Lightbulb, RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
@@ -149,11 +148,10 @@ export function ProgressTimeline({
   const createNote = useCreateProgressNote();
   const [showPrompt, setShowPrompt] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(getPromptForDay);
-  const { user } = useAuth();
 
   const { data: notes, isLoading } = useListProgressNotes(ideaId, {
     query: {
-      enabled: !!ideaId && !!user,
+      enabled: !!ideaId,
       queryKey: getListProgressNotesQueryKey(ideaId),
       initialData: initialNotes,
     },
