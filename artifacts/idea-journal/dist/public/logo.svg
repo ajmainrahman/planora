@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Planora">
+  <rect width="96" height="96" rx="27" fill="#3a8ea6"/>
+  <text x="48" y="68" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="58" fill="white" letter-spacing="-2">P</text>
+  <circle cx="66" cy="66" r="6" fill="white" opacity="0.85"/>
+</svg>
