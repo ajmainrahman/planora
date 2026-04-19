@@ -27,10 +27,10 @@ export function IdeaBoard() {
   const [highPriorityOnly, setHighPriorityOnly] = useState(false);
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("feed");
+  const { user } = useAuth();
   const { data: ideas, isLoading } = useListIdeas({
     query: { queryKey: getListIdeasQueryKey(), enabled: !!user }
   });
-  const { user } = useAuth();
   const { isBookmarked } = useBookmarks();
 
   const categories = useMemo(() => {
