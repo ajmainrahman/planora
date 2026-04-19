@@ -9,7 +9,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { refresh } = useAuth();
+  const { setUser } = useAuth();
   const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +28,7 @@ export default function SignIn() {
         setError(data.error || "Something went wrong.");
         return;
       }
-      await refresh();
+      setUser({ userId: data.id, name: data.name, email: data.email });
       setLocation("/dashboard");
     } catch {
       setError("Could not connect to the server. Please try again.");

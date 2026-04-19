@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, startOfWeek, subWeeks } from "date-fns";
