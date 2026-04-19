@@ -34,6 +34,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({ credentials: true, origin: allowedOrigins }));
 app.use(express.json());
+app.use(cookieParser());;
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(sessionMiddleware);
