@@ -1,13 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { jwtVerify } from 'jose';
+const { jwtVerify } = require('jose');
 
 function getSecret() {
   return new TextEncoder().encode(
-    process.env.SESSION_SECRET ?? 'planora-dev-secret-change-in-production'
+    process.env.SESSION_SECRET || 'planora-dev-secret-change-in-production'
   );
 }
 
-function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+function parseCookies(cookieHeader) {
   if (!cookieHeader) return {};
   return Object.fromEntries(
     cookieHeader.split(';').map(c => {
@@ -17,7 +16,7 @@ function parseCookies(cookieHeader: string | undefined): Record<string, string> 
   );
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -37,7 +36,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name: payload.name,
       email: payload.email,
     });
-  } catch {
+  } catch (err) {
+    console.error('Me error:', err);
     return res.status(401).json({ error: 'Not signed in.' });
   }
-}
+};
