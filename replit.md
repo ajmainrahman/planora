@@ -70,3 +70,4 @@ pnpm workspace monorepo using TypeScript. Runs on Replit for development and dep
 - `pnpm --filter @workspace/db run push` — push DB schema changes
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 - `pnpm --filter @workspace/idea-journal run dev` — run Planora locally
+# updated Sun Apr 19 04:48:16 PM UTC 2026
