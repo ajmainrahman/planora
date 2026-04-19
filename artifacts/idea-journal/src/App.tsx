@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,56 +14,31 @@ import SignIn from "@/pages/sign-in";
 import SignUp from "@/pages/sign-up";
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
+  defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
 });
 
-// Spinner shown while checking session
-function Spinner() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
-
-// All routing lives inside AuthProvider so useAuth always has context
 function AppRoutes() {
   const { user, loading } = useAuth();
 
-  if (loading) return <Spinner />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Switch>
-      {/* Public auth routes */}
       <Route path="/sign-in" component={SignIn} />
       <Route path="/sign-up" component={SignUp} />
-
-      {/* Public share routes */}
       <Route path="/share" component={PublicPortfolio} />
       <Route path="/share/:id" component={PublicIdea} />
-
-      {/* Protected routes — redirect to /sign-in if not logged in */}
-      <Route path="/">
-        {user ? <Home /> : <Redirect to="/sign-in" />}
-      </Route>
-      <Route path="/dashboard">
-        {user ? <Home /> : <Redirect to="/sign-in" />}
-      </Route>
-      <Route path="/ideas/:id">
-        {user ? <IdeaDetail /> : <Redirect to="/sign-in" />}
-      </Route>
-      <Route path="/calendar">
-        {user ? <CalendarPage /> : <Redirect to="/sign-in" />}
-      </Route>
-      <Route path="/weekly-review">
-        {user ? <WeeklyReviewPage /> : <Redirect to="/sign-in" />}
-      </Route>
-
+      <Route path="/">{user ? <Home /> : <Redirect to="/sign-in" />}</Route>
+      <Route path="/dashboard">{user ? <Home /> : <Redirect to="/sign-in" />}</Route>
+      <Route path="/ideas/:id">{user ? <IdeaDetail /> : <Redirect to="/sign-in" />}</Route>
+      <Route path="/calendar">{user ? <CalendarPage /> : <Redirect to="/sign-in" />}</Route>
+      <Route path="/weekly-review">{user ? <WeeklyReviewPage /> : <Redirect to="/sign-in" />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
