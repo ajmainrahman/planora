@@ -19,6 +19,7 @@ import { Controller } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
 import { Send, Hash, X, Lightbulb, RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { RichTextEditor } from "@/components/rich-text-editor";
@@ -148,10 +149,11 @@ export function ProgressTimeline({
   const createNote = useCreateProgressNote();
   const [showPrompt, setShowPrompt] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(getPromptForDay);
+  const { user } = useAuth();
 
   const { data: notes, isLoading } = useListProgressNotes(ideaId, {
     query: {
-      enabled: !!ideaId,
+      enabled: !!ideaId && !!user,
       queryKey: getListProgressNotesQueryKey(ideaId),
       initialData: initialNotes,
     },

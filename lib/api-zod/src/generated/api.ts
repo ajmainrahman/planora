@@ -28,6 +28,8 @@ export const ListIdeasResponseItem = zod.object({
   nextStep: zod.string(),
   dueDate: zod.coerce.date().nullable(),
   reminderAt: zod.coerce.date().nullable(),
+  recurrenceType: zod.string().nullable().optional(),
+  recurrenceInterval: zod.number().nullable().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

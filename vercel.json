@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/idea-journal run build",
+  "buildCommand": "pnpm --filter @workspace/db run push-force ; pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/idea-journal run build",
   "outputDirectory": "artifacts/idea-journal/dist/public",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
   "routes": [

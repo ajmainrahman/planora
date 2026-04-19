@@ -3,10 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Lightbulb, Rocket, Share2, PenTool, Flame, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 
 export function DashboardStats() {
+  const { user } = useAuth();
   const { data: dashboard, isLoading } = useGetDashboard({
-    query: { queryKey: getGetDashboardQueryKey() }
+    query: { queryKey: getGetDashboardQueryKey(), enabled: !!user }
   });
 
   if (isLoading) {

@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
-import { clearSession, parseSession, requireAuth, setSession } from "../middlewares/authMiddleware.js";
+import { clearSession, parseSession, setSession } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
@@ -23,7 +23,11 @@ router.post("/register", async (req, res) => {
   }
   const passwordHash = await bcrypt.hash(password, 12);
   const [user] = await db.insert(usersTable).values({ name: name.trim(), email: email.toLowerCase(), passwordHash }).returning();
-  setSession(res, { userId: user.id, name: user.name, email: user.email });
+  if (!user) {
+    res.status(500).json({ error: "Failed to create account." });
+    return;
+  }
+  await setSession(res, { userId: user.id, name: user.name, email: user.email });
   res.status(201).json({ id: user.id, name: user.name, email: user.email });
 });
 
@@ -43,7 +47,7 @@ router.post("/login", async (req, res) => {
     res.status(401).json({ error: "Invalid email or password." });
     return;
   }
-  setSession(res, { userId: user.id, name: user.name, email: user.email });
+  await setSession(res, { userId: user.id, name: user.name, email: user.email });
   res.json({ id: user.id, name: user.name, email: user.email });
 });
 
@@ -52,8 +56,8 @@ router.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/me", (req, res) => {
-  const session = parseSession(req);
+router.get("/me", async (req, res) => {
+  const session = await parseSession(req);
   if (!session) {
     res.status(401).json({ error: "Not signed in." });
     return;
