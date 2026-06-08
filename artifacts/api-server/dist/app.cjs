@@ -38979,6 +38979,27 @@ var CreateProgressNoteBody = objectType({
   mood: stringType().min(1),
   tags: arrayType(stringType()).optional().default([])
 });
+var UpdateProgressNoteParams = objectType({
+  id: coerce.number(),
+  noteId: coerce.number()
+});
+var UpdateProgressNoteBody = objectType({
+  content: stringType().min(1).optional(),
+  mood: stringType().min(1).optional(),
+  tags: arrayType(stringType()).optional()
+});
+var UpdateProgressNoteResponse = objectType({
+  id: numberType(),
+  ideaId: numberType(),
+  content: stringType(),
+  mood: stringType(),
+  tags: arrayType(stringType()).default([]),
+  createdAt: coerce.date()
+});
+var DeleteProgressNoteParams = objectType({
+  id: coerce.number(),
+  noteId: coerce.number()
+});
 var GetDashboardResponse = objectType({
   totalIdeas: numberType(),
   activeIdeas: numberType(),
@@ -58058,6 +58079,63 @@ router2.post("/ideas/:id/progress", async (req, res) => {
     return;
   }
   res.status(201).json(toProgressResponse(note));
+});
+router2.patch("/ideas/:id/progress/:noteId", async (req, res) => {
+  const userId = getUserId(req);
+  const params = UpdateProgressNoteParams.safeParse(req.params);
+  const body = UpdateProgressNoteBody.safeParse(req.body);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  if (Object.keys(body.data).length === 0) {
+    res.status(400).json({ error: "At least one field is required" });
+    return;
+  }
+  const [idea] = await db.select({ id: ideasTable.id }).from(ideasTable).where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+  const [note] = await db.update(progressNotesTable).set(body.data).where(
+    and(
+      eq(progressNotesTable.id, params.data.noteId),
+      eq(progressNotesTable.ideaId, params.data.id)
+    )
+  ).returning();
+  if (!note) {
+    res.status(404).json({ error: "Progress note not found" });
+    return;
+  }
+  res.json(UpdateProgressNoteResponse.parse(toProgressResponse(note)));
+});
+router2.delete("/ideas/:id/progress/:noteId", async (req, res) => {
+  const userId = getUserId(req);
+  const params = DeleteProgressNoteParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const [idea] = await db.select({ id: ideasTable.id }).from(ideasTable).where(and(eq(ideasTable.id, params.data.id), eq(ideasTable.ownerId, userId)));
+  if (!idea) {
+    res.status(404).json({ error: "Idea not found" });
+    return;
+  }
+  const deleted = await db.delete(progressNotesTable).where(
+    and(
+      eq(progressNotesTable.id, params.data.noteId),
+      eq(progressNotesTable.ideaId, params.data.id)
+    )
+  ).returning({ id: progressNotesTable.id });
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Progress note not found" });
+    return;
+  }
+  res.status(204).send();
 });
 router2.get("/dashboard", async (req, res) => {
   const userId = getUserId(req);

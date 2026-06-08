@@ -7,6 +7,8 @@ import {
   useListProgressNotes,
   getListProgressNotesQueryKey,
   useCreateProgressNote,
+  useUpdateProgressNote,
+  useDeleteProgressNote,
   getGetIdeaQueryKey
 } from "@workspace/api-client-react";
 import type { ProgressNote } from "@workspace/api-client-react";
@@ -18,9 +20,32 @@ import { Badge } from "@/components/ui/badge";
 import { Controller } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
-import { Send, Hash, X, Lightbulb, RefreshCw } from "lucide-react";
+import { Send, Hash, X, Lightbulb, RefreshCw, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { RichTextEditor } from "@/components/rich-text-editor";
 
@@ -133,6 +158,188 @@ function TagInput({
   );
 }
 
+function EditNoteDialog({
+  note,
+  ideaId,
+  open,
+  onClose,
+}: {
+  note: ProgressNote;
+  ideaId: number;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const updateNote = useUpdateProgressNote();
+
+  const form = useForm<z.infer<typeof noteSchema>>({
+    resolver: zodResolver(noteSchema),
+    defaultValues: {
+      content: note.content,
+      mood: note.mood,
+      tags: note.tags ?? [],
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof noteSchema>) => {
+    const plainText = values.content.replace(/<[^>]+>/g, "").trim();
+    if (!plainText) {
+      form.setError("content", { message: "Please write something" });
+      return;
+    }
+    updateNote.mutate(
+      { id: ideaId, noteId: note.id, data: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListProgressNotesQueryKey(ideaId) });
+          queryClient.invalidateQueries({ queryKey: getGetIdeaQueryKey(ideaId) });
+          toast({ title: "Entry updated" });
+          onClose();
+        },
+        onError: () => {
+          toast({ title: "Failed to update entry", variant: "destructive" });
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Edit journal entry</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="content"
+              render={() => (
+                <FormItem>
+                  <FormControl>
+                    <Controller
+                      control={form.control}
+                      name="content"
+                      render={({ field: controlledField }) => (
+                        <RichTextEditor
+                          value={controlledField.value}
+                          onChange={controlledField.onChange}
+                          placeholder="What progress did you make? Any thoughts..."
+                          minHeight="120px"
+                        />
+                      )}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <TagInput value={field.value} onChange={field.onChange} />
+              )}
+            />
+
+            <div className="flex items-center justify-between">
+              <FormField
+                control={form.control}
+                name="mood"
+                render={({ field }) => (
+                  <FormItem className="w-[160px]">
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9 border-transparent bg-muted/50 text-xs">
+                          <SelectValue placeholder="Mood" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {MOODS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateNote.isPending}>
+                {updateNote.isPending ? <Spinner /> : "Save changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteNoteDialog({
+  note,
+  ideaId,
+  open,
+  onClose,
+}: {
+  note: ProgressNote;
+  ideaId: number;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const deleteNote = useDeleteProgressNote();
+
+  const handleDelete = () => {
+    deleteNote.mutate(
+      { id: ideaId, noteId: note.id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListProgressNotesQueryKey(ideaId) });
+          queryClient.invalidateQueries({ queryKey: getGetIdeaQueryKey(ideaId) });
+          toast({ title: "Entry deleted" });
+          onClose();
+        },
+        onError: () => {
+          toast({ title: "Failed to delete entry", variant: "destructive" });
+        },
+      },
+    );
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This journal entry will be permanently removed. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteNote.isPending}
+          >
+            {deleteNote.isPending ? <Spinner /> : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function ProgressTimeline({
   ideaId,
   initialNotes,
@@ -149,6 +356,8 @@ export function ProgressTimeline({
   const createNote = useCreateProgressNote();
   const [showPrompt, setShowPrompt] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(getPromptForDay);
+  const [editingNote, setEditingNote] = useState<ProgressNote | null>(null);
+  const [deletingNote, setDeletingNote] = useState<ProgressNote | null>(null);
   const { user } = useAuth();
 
   const { data: notes, isLoading } = useListProgressNotes(ideaId, {
@@ -350,16 +559,84 @@ export function ProgressTimeline({
                   </div>
                 )}
 
-                <div className="hidden md:flex mt-3 pt-3 border-t items-center justify-end">
+                <div className="hidden md:flex mt-3 pt-3 border-t items-center justify-between">
                   <span className="text-xs capitalize bg-muted/50 px-2.5 py-1 rounded-full text-muted-foreground font-medium">
                     Mood: {note.mood}
                   </span>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+                        title="More options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingNote(note)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeletingNote(note)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="md:hidden flex items-center justify-end mt-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+                        title="More options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingNote(note)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeletingNote(note)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {editingNote && (
+        <EditNoteDialog
+          note={editingNote}
+          ideaId={ideaId}
+          open={!!editingNote}
+          onClose={() => setEditingNote(null)}
+        />
+      )}
+
+      {deletingNote && (
+        <DeleteNoteDialog
+          note={deletingNote}
+          ideaId={ideaId}
+          open={!!deletingNote}
+          onClose={() => setDeletingNote(null)}
+        />
+      )}
     </div>
   );
 }

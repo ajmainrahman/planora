@@ -166,6 +166,37 @@ export const CreateProgressNoteBody = zod.object({
 });
 
 /**
+ * @summary Update a progress note
+ */
+export const UpdateProgressNoteParams = zod.object({
+  id: zod.coerce.number(),
+  noteId: zod.coerce.number(),
+});
+
+export const UpdateProgressNoteBody = zod.object({
+  content: zod.string().min(1).optional(),
+  mood: zod.string().min(1).optional(),
+  tags: zod.array(zod.string()).optional(),
+});
+
+export const UpdateProgressNoteResponse = zod.object({
+  id: zod.number(),
+  ideaId: zod.number(),
+  content: zod.string(),
+  mood: zod.string(),
+  tags: zod.array(zod.string()).default([]),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a progress note
+ */
+export const DeleteProgressNoteParams = zod.object({
+  id: zod.coerce.number(),
+  noteId: zod.coerce.number(),
+});
+
+/**
  * @summary Get journal dashboard summary
  */
 export const GetDashboardResponse = zod.object({

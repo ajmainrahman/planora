@@ -690,6 +690,161 @@ export const useCreateProgressNote = <
 };
 
 /**
+ * @summary Update a progress note
+ */
+export const getUpdateProgressNoteUrl = (id: number, noteId: number) => {
+  return `/api/ideas/${id}/progress/${noteId}`;
+};
+
+export const updateProgressNote = async (
+  id: number,
+  noteId: number,
+  data: { content?: string; mood?: string; tags?: string[] },
+  options?: RequestInit,
+): Promise<ProgressNote> => {
+  return customFetch<ProgressNote>(getUpdateProgressNoteUrl(id, noteId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(data),
+  });
+};
+
+export const getUpdateProgressNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProgressNote>>,
+    TError,
+    { id: number; noteId: number; data: { content?: string; mood?: string; tags?: string[] } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateProgressNote>>,
+  TError,
+  { id: number; noteId: number; data: { content?: string; mood?: string; tags?: string[] } },
+  TContext
+> => {
+  const mutationKey = ["updateProgressNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateProgressNote>>,
+    { id: number; noteId: number; data: { content?: string; mood?: string; tags?: string[] } }
+  > = (props) => {
+    const { id, noteId, data } = props ?? {};
+    return updateProgressNote(id, noteId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateProgressNoteMutationResult = NonNullable<Awaited<ReturnType<typeof updateProgressNote>>>;
+export type UpdateProgressNoteMutationError = ErrorType<unknown>;
+
+export const useUpdateProgressNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProgressNote>>,
+    TError,
+    { id: number; noteId: number; data: { content?: string; mood?: string; tags?: string[] } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateProgressNote>>,
+  TError,
+  { id: number; noteId: number; data: { content?: string; mood?: string; tags?: string[] } },
+  TContext
+> => {
+  return useMutation(getUpdateProgressNoteMutationOptions(options));
+};
+
+/**
+ * @summary Delete a progress note
+ */
+export const getDeleteProgressNoteUrl = (id: number, noteId: number) => {
+  return `/api/ideas/${id}/progress/${noteId}`;
+};
+
+export const deleteProgressNote = async (
+  id: number,
+  noteId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteProgressNoteUrl(id, noteId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteProgressNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProgressNote>>,
+    TError,
+    { id: number; noteId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteProgressNote>>,
+  TError,
+  { id: number; noteId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteProgressNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteProgressNote>>,
+    { id: number; noteId: number }
+  > = (props) => {
+    const { id, noteId } = props ?? {};
+    return deleteProgressNote(id, noteId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteProgressNoteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProgressNote>>>;
+export type DeleteProgressNoteMutationError = ErrorType<unknown>;
+
+export const useDeleteProgressNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProgressNote>>,
+    TError,
+    { id: number; noteId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteProgressNote>>,
+  TError,
+  { id: number; noteId: number },
+  TContext
+> => {
+  return useMutation(getDeleteProgressNoteMutationOptions(options));
+};
+
+/**
  * @summary Get journal dashboard summary
  */
 export const getGetDashboardUrl = () => {
