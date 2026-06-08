@@ -40,21 +40,25 @@ waitForPort = 8080
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=20671 pnpm --filter @workspace/idea-journal run dev"
-waitForPort = 20671
-
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=5000 pnpm --filter @workspace/idea-journal run dev"
+waitForPort = 5000
+
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
 
 [[ports]]
 localPort = 5173
