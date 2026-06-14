@@ -206,45 +206,45 @@ function EditNoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
+      <DialogContent className="max-w-xl flex flex-col max-h-[90vh] p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle>Edit journal entry</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="content"
-              render={() => (
-                <FormItem>
-                  <FormControl>
-                    <Controller
-                      control={form.control}
-                      name="content"
-                      render={({ field: controlledField }) => (
-                        <RichTextEditor
-                          value={controlledField.value}
-                          onChange={controlledField.onChange}
-                          placeholder="What progress did you make? Any thoughts..."
-                          minHeight="120px"
-                        />
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="content"
+                render={() => (
+                  <FormItem>
+                    <FormControl>
+                      <Controller
+                        control={form.control}
+                        name="content"
+                        render={({ field: controlledField }) => (
+                          <RichTextEditor
+                            value={controlledField.value}
+                            onChange={controlledField.onChange}
+                            placeholder="What progress did you make? Any thoughts..."
+                            minHeight="120px"
+                          />
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Controller
-              control={form.control}
-              name="tags"
-              render={({ field }) => (
-                <TagInput value={field.value} onChange={field.onChange} />
-              )}
-            />
+              <Controller
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <TagInput value={field.value} onChange={field.onChange} />
+                )}
+              />
 
-            <div className="flex items-center justify-between">
               <FormField
                 control={form.control}
                 name="mood"
@@ -269,7 +269,7 @@ function EditNoteDialog({
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="px-6 py-4 border-t shrink-0 bg-background">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
