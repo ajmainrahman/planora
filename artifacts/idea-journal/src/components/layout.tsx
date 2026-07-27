@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid, LogOut } from "lucide-react";
+import { Moon, Sun, Search, CalendarDays, BookText, LayoutGrid, LogOut, TableProperties } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import { SearchDialog } from "@/components/search-dialog";
@@ -29,6 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: "Board", icon: LayoutGrid },
     { href: "/calendar", label: "Calendar", icon: CalendarDays },
     { href: "/weekly-review", label: "Weekly", icon: BookText },
+    { href: "/tracker", label: "Tracker", icon: TableProperties },
   ];
 
   return (

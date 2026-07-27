@@ -20473,27 +20473,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module2.exports = Router5;
+    module2.exports = Router6;
     module2.exports.Route = Route;
-    function Router5(options) {
-      if (!(this instanceof Router5)) {
-        return new Router5(options);
+    function Router6(options) {
+      if (!(this instanceof Router6)) {
+        return new Router6(options);
       }
       const opts = options || {};
-      function router5(req, res, next) {
-        router5.handle(req, res, next);
+      function router6(req, res, next) {
+        router6.handle(req, res, next);
       }
-      Object.setPrototypeOf(router5, this);
-      router5.caseSensitive = opts.caseSensitive;
-      router5.mergeParams = opts.mergeParams;
-      router5.params = {};
-      router5.strict = opts.strict;
-      router5.stack = [];
-      return router5;
+      Object.setPrototypeOf(router6, this);
+      router6.caseSensitive = opts.caseSensitive;
+      router6.mergeParams = opts.mergeParams;
+      router6.params = {};
+      router6.strict = opts.strict;
+      router6.stack = [];
+      return router6;
     }
-    Router5.prototype = function() {
+    Router6.prototype = function() {
     };
-    Router5.prototype.param = function param(name, fn) {
+    Router6.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20513,7 +20513,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router5.prototype.handle = function handle(req, res, callback) {
+    Router6.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20640,7 +20640,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router5.prototype.use = function use(handler) {
+    Router6.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20673,7 +20673,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router5.prototype.route = function route(path) {
+    Router6.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20688,7 +20688,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router5.prototype[method] = function(path) {
+      Router6.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20871,13 +20871,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = require("node:path").resolve;
     var once = require_once();
-    var Router5 = require_router();
+    var Router6 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports2 = module2.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router5 = null;
+      var router6 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20886,13 +20886,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router5 === null) {
-            router5 = new Router5({
+          if (router6 === null) {
+            router6 = new Router6({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router5;
+          return router6;
         }
       });
     };
@@ -20963,15 +20963,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router5 = this.router;
+      var router6 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router5.use(path, fn2);
+          return router6.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router5.use(path, function mounted_app(req, res, next) {
+        router6.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23498,7 +23498,7 @@ var require_express = __commonJS({
     var EventEmitter = require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router5 = require_router();
+    var Router6 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module2.exports = createApplication;
@@ -23520,8 +23520,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router5.Route;
-    exports2.Router = Router5;
+    exports2.Route = Router6.Route;
+    exports2.Router = Router6;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -33602,7 +33602,7 @@ __export(app_exports, {
   default: () => app_default
 });
 module.exports = __toCommonJS(app_exports);
-var import_express5 = __toESM(require_express2(), 1);
+var import_express6 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -34970,7 +34970,7 @@ async function requireAuth(req, res, next) {
 }
 
 // src/routes/index.ts
-var import_express4 = __toESM(require_express2(), 1);
+var import_express5 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -46202,7 +46202,12 @@ __export(schema_exports, {
   ideasTable: () => ideasTable,
   insertIdeaSchema: () => insertIdeaSchema,
   insertProgressNoteSchema: () => insertProgressNoteSchema,
+  insertTrackerRowSchema: () => insertTrackerRowSchema,
   progressNotesTable: () => progressNotesTable,
+  projectTrackerTable: () => projectTrackerTable,
+  trackerPriorityEnum: () => trackerPriorityEnum,
+  trackerStatusEnum: () => trackerStatusEnum,
+  updateTrackerRowSchema: () => updateTrackerRowSchema,
   usersTable: () => usersTable
 });
 
@@ -57650,6 +57655,48 @@ var usersTable = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
+// ../../lib/db/src/schema/tracker.ts
+var trackerStatusEnum = pgEnum("tracker_status", [
+  "not_started",
+  "working_on",
+  "complete",
+  "blocked",
+  "in_review",
+  "na"
+]);
+var trackerPriorityEnum = pgEnum("tracker_priority", [
+  "low",
+  "medium",
+  "high",
+  "critical"
+]);
+var projectTrackerTable = pgTable("project_tracker", {
+  id: serial("id").primaryKey(),
+  ownerId: text("owner_id").notNull(),
+  feature: text("feature").notNull().default(""),
+  poc: text("poc").default(""),
+  deadline: text("deadline").default(""),
+  prdStatus: trackerStatusEnum("prd_status").default("not_started"),
+  figmaLink: text("figma_link").default(""),
+  prdLink: text("prd_link").default(""),
+  brdStatus: trackerStatusEnum("brd_status").default("not_started"),
+  brdLink: text("brd_link").default(""),
+  testCaseLink: text("test_case_link").default(""),
+  prototype: text("prototype").default(""),
+  priority: trackerPriorityEnum("priority").default("medium"),
+  assignee: text("assignee").default(""),
+  comment: text("comment").default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => /* @__PURE__ */ new Date())
+});
+var insertTrackerRowSchema = createInsertSchema(projectTrackerTable).omit({
+  id: true,
+  ownerId: true,
+  createdAt: true,
+  updatedAt: true
+});
+var updateTrackerRowSchema = insertTrackerRowSchema.partial();
+
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
 if (!process.env.DATABASE_URL) {
@@ -60199,12 +60246,59 @@ router3.post("/logout", (_req, res) => {
 });
 var auth_default = router3;
 
-// src/routes/index.ts
+// src/routes/tracker.ts
+var import_express4 = __toESM(require_express2(), 1);
 var router4 = (0, import_express4.Router)();
-router4.use(health_default);
-router4.use("/auth", auth_default);
-router4.use(ideas_default);
-var routes_default = router4;
+var getUserId2 = (req) => String(req.sessionUser.userId);
+router4.get("/tracker", requireAuth, async (req, res) => {
+  const ownerId = getUserId2(req);
+  const rows = await db.select().from(projectTrackerTable).where(eq(projectTrackerTable.ownerId, ownerId)).orderBy(projectTrackerTable.createdAt);
+  res.json(rows);
+});
+router4.post("/tracker", requireAuth, async (req, res) => {
+  const ownerId = getUserId2(req);
+  const body = req.body ?? {};
+  const [row] = await db.insert(projectTrackerTable).values({ ownerId, ...body }).returning();
+  res.status(201).json(row);
+});
+router4.patch("/tracker/:id", requireAuth, async (req, res) => {
+  const ownerId = getUserId2(req);
+  const id = Number(req.params.id);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const body = req.body ?? {};
+  const [row] = await db.update(projectTrackerTable).set(body).where(and(eq(projectTrackerTable.id, id), eq(projectTrackerTable.ownerId, ownerId))).returning();
+  if (!row) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json(row);
+});
+router4.delete("/tracker/:id", requireAuth, async (req, res) => {
+  const ownerId = getUserId2(req);
+  const id = Number(req.params.id);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const [deleted] = await db.delete(projectTrackerTable).where(and(eq(projectTrackerTable.id, id), eq(projectTrackerTable.ownerId, ownerId))).returning();
+  if (!deleted) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.status(204).send();
+});
+var tracker_default = router4;
+
+// src/routes/index.ts
+var router5 = (0, import_express5.Router)();
+router5.use(health_default);
+router5.use("/auth", auth_default);
+router5.use(ideas_default);
+router5.use(tracker_default);
+var routes_default = router5;
 
 // src/lib/logger.ts
 var import_pino = __toESM(require_pino(), 1);
@@ -60225,7 +60319,7 @@ var logger = (0, import_pino.default)({
 });
 
 // src/app.ts
-var app = (0, import_express5.default)();
+var app = (0, import_express6.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -60247,9 +60341,9 @@ app.use(
 );
 var allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()) : true;
 app.use((0, import_cors.default)({ credentials: true, origin: allowedOrigins }));
-app.use(import_express5.default.json());
+app.use(import_express6.default.json());
 app.use((0, import_cookie_parser.default)());
-app.use(import_express5.default.urlencoded({ extended: true }));
+app.use(import_express6.default.urlencoded({ extended: true }));
 app.use((0, import_cookie_parser.default)());
 app.use(sessionMiddleware);
 app.use("/api", routes_default);

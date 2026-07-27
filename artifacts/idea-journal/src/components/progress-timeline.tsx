@@ -559,47 +559,21 @@ export function ProgressTimeline({
                   </div>
                 )}
 
-                <div className="hidden md:flex mt-3 pt-3 border-t items-center justify-between">
+                <div className="flex mt-3 pt-3 border-t items-center justify-between">
                   <span className="text-xs capitalize bg-muted/50 px-2.5 py-1 rounded-full text-muted-foreground font-medium">
-                    Mood: {note.mood}
+                    {MOODS.find((m) => m.value === note.mood)?.label ?? note.mood}
                   </span>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                         title="More options"
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingNote(note)}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeletingNote(note)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className="md:hidden flex items-center justify-end mt-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
-                        title="More options"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-36">
                       <DropdownMenuItem onClick={() => setEditingNote(note)}>
                         <Pencil className="w-4 h-4 mr-2" />
                         Edit

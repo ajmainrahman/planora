@@ -36,6 +36,17 @@ pnpm workspace monorepo using TypeScript. Runs on Replit for development and dep
 - Session middleware (`sessionMiddleware`) parses cookie on every request, sets `req.sessionUser`
 - `requireAuth` middleware rejects unauthenticated requests with 401
 
+## Project Tracker
+
+- **Page**: `/tracker` — spreadsheet-style project tracking table
+- **DB table**: `project_tracker` (Drizzle schema: `lib/db/src/schema/tracker.ts`)
+- **API routes**: `GET/POST /api/tracker`, `PATCH/DELETE /api/tracker/:id` (in `artifacts/api-server/src/routes/tracker.ts`)
+- **Columns**: Feature, Assignee, POC, Deadline, Priority, PRD Status, Figma Link, PRD Link, BRD Status, BRD Link, Test Case Link, Prototype, Comment
+- **Enums**: `tracker_status` (not_started, working_on, in_review, complete, blocked, na), `tracker_priority` (low, medium, high, critical)
+- Inline-editable cells (click any text/date cell); status and priority columns use dropdowns with color badges
+- Filter bar: search by text + filter by PRD status, BRD status, priority
+- Per-user data isolation via `owner_id`
+
 ## Key Features
 
 - Public landing page with hero, step cards, sign-in/sign-up links

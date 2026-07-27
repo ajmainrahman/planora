@@ -10,6 +10,7 @@ import PublicPortfolio from "@/pages/public-portfolio";
 import PublicIdea from "@/pages/public-idea";
 import CalendarPage from "@/pages/calendar";
 import WeeklyReviewPage from "@/pages/weekly-review";
+import TrackerPage from "@/pages/tracker";
 import SignIn from "@/pages/sign-in";
 import SignUp from "@/pages/sign-up";
 
@@ -39,6 +40,7 @@ function AppRoutes() {
       <Route path="/ideas/:id">{user ? <IdeaDetail /> : <Redirect to="/sign-in" />}</Route>
       <Route path="/calendar">{user ? <CalendarPage /> : <Redirect to="/sign-in" />}</Route>
       <Route path="/weekly-review">{user ? <WeeklyReviewPage /> : <Redirect to="/sign-in" />}</Route>
+      <Route path="/tracker">{user ? <TrackerPage /> : <Redirect to="/sign-in" />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
