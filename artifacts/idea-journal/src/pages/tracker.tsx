@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
   ChevronDown,
   Filter,
   X,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -66,6 +68,19 @@ const STATUS_OPTIONS: { value: TrackerStatus; label: string }[] = [
   { value: "blocked", label: "Blocked" },
   { value: "na", label: "N/A" },
 ];
+
+// Lower number = higher in the list. "complete" sinks to the bottom.
+const STATUS_SORT_ORDER: Record<TrackerStatus, number> = {
+  working_on:  0,
+  blocked:     1,
+  in_review:   2,
+  not_started: 3,
+  na:          4,
+  complete:    5,
+};
+
+const rowSortKey = (r: TrackerRow) =>
+  STATUS_SORT_ORDER[r.prdStatus ?? "not_started"] ?? 3;
 
 const PRIORITY_OPTIONS: { value: TrackerPriority; label: string }[] = [
   { value: "low", label: "Low" },
@@ -383,6 +398,26 @@ export default function TrackerPage() {
   const [filterSearch, setFilterSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Editable page title
+  const [pageTitle, setPageTitle] = useState<string>(
+    () => localStorage.getItem("trackerPageTitle") ?? "Project Tracker"
+  );
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const startEditTitle = () => {
+    setTitleDraft(pageTitle);
+    setEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.select(), 0);
+  };
+  const commitTitle = () => {
+    const trimmed = titleDraft.trim() || "Project Tracker";
+    setPageTitle(trimmed);
+    localStorage.setItem("trackerPageTitle", trimmed);
+    setEditingTitle(false);
+  };
+
   const { data: rows = [], isLoading } = useQuery<TrackerRow[]>({
     queryKey: ["tracker"],
     queryFn: apiList,
@@ -426,22 +461,24 @@ export default function TrackerPage() {
     createMutation.mutate({ feature: "New Feature" });
   };
 
-  // Apply filters
-  const filtered = rows.filter((r) => {
-    if (filterPrd !== "all" && r.prdStatus !== filterPrd) return false;
-    if (filterBrd !== "all" && r.brdStatus !== filterBrd) return false;
-    if (filterPriority !== "all" && r.priority !== filterPriority) return false;
-    if (filterSearch) {
-      const q = filterSearch.toLowerCase();
-      return (
-        r.feature?.toLowerCase().includes(q) ||
-        r.poc?.toLowerCase().includes(q) ||
-        r.assignee?.toLowerCase().includes(q) ||
-        r.comment?.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  // Apply filters then sort: working_on first → complete last
+  const filtered = rows
+    .filter((r) => {
+      if (filterPrd !== "all" && r.prdStatus !== filterPrd) return false;
+      if (filterBrd !== "all" && r.brdStatus !== filterBrd) return false;
+      if (filterPriority !== "all" && r.priority !== filterPriority) return false;
+      if (filterSearch) {
+        const q = filterSearch.toLowerCase();
+        return (
+          r.feature?.toLowerCase().includes(q) ||
+          r.poc?.toLowerCase().includes(q) ||
+          r.assignee?.toLowerCase().includes(q) ||
+          r.comment?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => rowSortKey(a) - rowSortKey(b));
 
   const activeFilters =
     (filterPrd !== "all" ? 1 : 0) +
@@ -454,7 +491,41 @@ export default function TrackerPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-serif font-semibold tracking-tight">Project Tracker</h1>
+            {editingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={titleInputRef}
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onBlur={commitTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitTitle();
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  className="text-2xl font-serif font-semibold tracking-tight bg-transparent border-b-2 border-primary outline-none w-auto min-w-[160px]"
+                  style={{ width: `${Math.max(titleDraft.length, 10)}ch` }}
+                  autoFocus
+                />
+                <button
+                  onClick={commitTitle}
+                  className="text-primary hover:text-primary/80 shrink-0"
+                  aria-label="Save title"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <h1 className="text-2xl font-serif font-semibold tracking-tight">{pageTitle}</h1>
+                <button
+                  onClick={startEditTitle}
+                  className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground shrink-0"
+                  aria-label="Edit title"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground mt-0.5">
               Track features, deliverables, and their statuses in one place.
             </p>
@@ -554,7 +625,7 @@ export default function TrackerPage() {
                   <th
                     key={col.key}
                     className={cn(
-                      "px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap border-r border-primary-foreground/20 last:border-r-0",
+                      "px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap border-r border-primary-foreground/20 last:border-r-0",
                       col.width,
                     )}
                   >
