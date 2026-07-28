@@ -10,6 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -106,19 +112,19 @@ const PRIORITY_COLORS: Record<TrackerPriority, string> = {
 };
 
 const COLUMNS = [
-  { key: "feature", label: "Feature", width: "min-w-[180px]", type: "text" },
-  { key: "assignee", label: "Assignee", width: "min-w-[120px]", type: "text" },
-  { key: "poc", label: "POC", width: "min-w-[120px]", type: "text" },
-  { key: "deadline", label: "Deadline", width: "min-w-[120px]", type: "date" },
-  { key: "priority", label: "Priority", width: "min-w-[120px]", type: "priority" },
-  { key: "prdStatus", label: "PRD Status", width: "min-w-[130px]", type: "status" },
-  { key: "figmaLink", label: "Figma Link", width: "min-w-[160px]", type: "link" },
-  { key: "prdLink", label: "PRD Link", width: "min-w-[140px]", type: "link" },
-  { key: "brdStatus", label: "BRD Status", width: "min-w-[130px]", type: "status" },
-  { key: "brdLink", label: "BRD Link", width: "min-w-[140px]", type: "link" },
-  { key: "testCaseLink", label: "Test Case Link", width: "min-w-[150px]", type: "link" },
-  { key: "prototype", label: "Prototype", width: "min-w-[140px]", type: "link" },
-  { key: "comment", label: "Comment", width: "min-w-[200px]", type: "text" },
+  { key: "feature",      label: "Feature",        width: "w-[160px] min-w-[120px] max-w-[160px]", type: "text" },
+  { key: "assignee",     label: "Assignee",        width: "w-[120px] min-w-[100px]",               type: "text" },
+  { key: "poc",          label: "POC",             width: "w-[110px] min-w-[90px]",                type: "text" },
+  { key: "deadline",     label: "Deadline",        width: "w-[110px] min-w-[100px]",               type: "date" },
+  { key: "priority",     label: "Priority",        width: "w-[110px] min-w-[100px]",               type: "priority" },
+  { key: "prdStatus",    label: "PRD Status",      width: "w-[120px] min-w-[110px]",               type: "status" },
+  { key: "figmaLink",    label: "Figma Link",      width: "w-[140px] min-w-[120px]",               type: "link" },
+  { key: "prdLink",      label: "PRD Link",        width: "w-[130px] min-w-[110px]",               type: "link" },
+  { key: "brdStatus",    label: "BRD Status",      width: "w-[120px] min-w-[110px]",               type: "status" },
+  { key: "brdLink",      label: "BRD Link",        width: "w-[130px] min-w-[110px]",               type: "link" },
+  { key: "testCaseLink", label: "Test Case Link",  width: "w-[130px] min-w-[110px]",               type: "link" },
+  { key: "prototype",    label: "Prototype",       width: "w-[130px] min-w-[110px]",               type: "link" },
+  { key: "comment",      label: "Comment",         width: "w-[180px] min-w-[140px]",               type: "text" },
 ] as const;
 
 type ColKey = (typeof COLUMNS)[number]["key"];
@@ -441,6 +447,29 @@ export default function TrackerPage() {
     setEditingColKey(null);
   };
 
+  // Show / hide columns
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("trackerHiddenCols") ?? "[]");
+      return new Set<string>(saved);
+    } catch { return new Set<string>(); }
+  });
+
+  const hideCol = (key: string) => {
+    const next = new Set(hiddenCols).add(key);
+    setHiddenCols(next);
+    localStorage.setItem("trackerHiddenCols", JSON.stringify([...next]));
+  };
+  const restoreCol = (key: string) => {
+    const next = new Set(hiddenCols);
+    next.delete(key);
+    setHiddenCols(next);
+    localStorage.setItem("trackerHiddenCols", JSON.stringify([...next]));
+  };
+  const vis = (key: string) => !hiddenCols.has(key);
+  const visibleCols = COLUMNS.filter((c) => vis(c.key));
+  const hiddenColList = COLUMNS.filter((c) => hiddenCols.has(c.key));
+
   const startEditTitle = () => {
     setTitleDraft(pageTitle);
     setEditingTitle(true);
@@ -656,15 +685,14 @@ export default function TrackerPage() {
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="bg-primary text-primary-foreground">
-                {COLUMNS.map((col, colIdx) => (
+                {visibleCols.map((col, colIdx) => (
                   <th
                     key={col.key}
                     className={cn(
-                      "px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap border-r border-b border-primary-foreground/20 bg-primary sticky top-0 z-20",
+                      "px-3 py-2 text-left text-xs font-semibold whitespace-nowrap border-r border-b border-primary-foreground/20 bg-primary sticky top-0 z-20",
                       col.width,
-                      colIdx === 0 && "left-0 z-30",
+                      colIdx === 0 && "sticky left-0 z-30",
                     )}
-                    style={colIdx === 0 ? { position: "sticky" } : undefined}
                   >
                     {editingColKey === col.key ? (
                       <input
@@ -675,29 +703,68 @@ export default function TrackerPage() {
                           if (e.key === "Enter") commitColLabel();
                           if (e.key === "Escape") setEditingColKey(null);
                         }}
-                        className="bg-transparent border-b border-primary-foreground/60 outline-none text-primary-foreground placeholder:text-primary-foreground/50 w-full min-w-[60px]"
+                        className="bg-transparent border-b border-primary-foreground/60 outline-none text-primary-foreground w-full min-w-[60px]"
                         style={{ width: `${Math.max(colLabelDraft.length, 4)}ch` }}
                         autoFocus
                       />
                     ) : (
-                      <span
-                        className="flex items-center gap-1 cursor-pointer group/hdr select-none"
-                        onClick={() => startEditCol(col.key, colLabels[col.key] ?? col.label)}
-                        title="Click to rename column"
-                      >
-                        {colLabels[col.key] ?? col.label}
-                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/hdr:opacity-60 transition-opacity shrink-0" />
+                      <span className="flex items-center gap-1 group/hdr select-none">
+                        <span
+                          className="flex items-center gap-1 cursor-pointer"
+                          onClick={() => startEditCol(col.key, colLabels[col.key] ?? col.label)}
+                          title="Click to rename"
+                        >
+                          {colLabels[col.key] ?? col.label}
+                          <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/hdr:opacity-50 transition-opacity shrink-0" />
+                        </span>
+                        {/* Hide column */}
+                        <button
+                          className="ml-auto opacity-0 group-hover/hdr:opacity-60 hover:!opacity-100 text-primary-foreground hover:text-red-300 transition-opacity shrink-0"
+                          onClick={(e) => { e.stopPropagation(); hideCol(col.key); }}
+                          title="Remove column"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </span>
                     )}
                   </th>
                 ))}
-                <th className="px-2 py-2.5 w-10 min-w-[40px] bg-primary sticky top-0 z-20 border-b border-primary-foreground/20" />
+                {/* + Restore hidden column / action column */}
+                <th className="px-2 py-2 w-10 min-w-[40px] bg-primary sticky top-0 z-20 border-b border-primary-foreground/20 text-center">
+                  {hiddenColList.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="text-primary-foreground/70 hover:text-primary-foreground rounded p-0.5 hover:bg-primary-foreground/10 transition-colors"
+                          title="Add hidden column back"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[160px]">
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium border-b mb-1">
+                          Hidden columns
+                        </div>
+                        {hiddenColList.map((col) => (
+                          <DropdownMenuItem
+                            key={col.key}
+                            onClick={() => restoreCol(col.key)}
+                            className="text-xs gap-2"
+                          >
+                            <Plus className="h-3 w-3 text-primary" />
+                            {colLabels[col.key] ?? col.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={COLUMNS.length + 1} className="py-16 text-center text-muted-foreground text-sm">
+                  <td colSpan={visibleCols.length + 1} className="py-16 text-center text-muted-foreground text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       Loading…
@@ -706,7 +773,7 @@ export default function TrackerPage() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={COLUMNS.length + 1} className="py-16 text-center text-muted-foreground text-sm">
+                  <td colSpan={visibleCols.length + 1} className="py-16 text-center text-muted-foreground text-sm">
                     {rows.length === 0
                       ? "No rows yet — click \"Add Row\" to get started."
                       : "No rows match your filters."}
@@ -722,111 +789,85 @@ export default function TrackerPage() {
                       "hover:bg-primary/5",
                     )}
                   >
-                    {/* Feature — sticky left */}
-                    <td
-                      className={cn(
-                        "px-3 py-2 border-r border-b border-border/30 sticky left-0 z-10",
-                        i % 2 === 0 ? "bg-background" : "bg-muted/20",
-                        "group-hover:bg-primary/5",
-                      )}
-                    >
-                      <TextCell
-                        value={row.feature}
-                        onChange={(v) => handleUpdate(row.id, "feature", v)}
-                        placeholder="Feature name"
-                        bold
-                      />
-                    </td>
-                    {/* Assignee */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <TextCell
-                        value={row.assignee}
-                        onChange={(v) => handleUpdate(row.id, "assignee", v)}
-                        placeholder="Assignee"
-                      />
-                    </td>
-                    {/* POC */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <TextCell
-                        value={row.poc}
-                        onChange={(v) => handleUpdate(row.id, "poc", v)}
-                        placeholder="Point of contact"
-                      />
-                    </td>
-                    {/* Deadline */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <DateCell
-                        value={row.deadline}
-                        onChange={(v) => handleUpdate(row.id, "deadline", v)}
-                      />
-                    </td>
-                    {/* Priority */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <PriorityBadge
-                        value={row.priority}
-                        onChange={(v) => updateMutation.mutate({ id: row.id, body: { priority: v } })}
-                      />
-                    </td>
-                    {/* PRD Status */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <StatusBadge
-                        value={row.prdStatus}
-                        onChange={(v) => updateMutation.mutate({ id: row.id, body: { prdStatus: v } })}
-                      />
-                    </td>
-                    {/* Figma Link */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <LinkCell
-                        value={row.figmaLink}
-                        onChange={(v) => handleUpdate(row.id, "figmaLink", v)}
-                        placeholder="https://figma.com/..."
-                      />
-                    </td>
-                    {/* PRD Link */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <LinkCell
-                        value={row.prdLink}
-                        onChange={(v) => handleUpdate(row.id, "prdLink", v)}
-                      />
-                    </td>
-                    {/* BRD Status */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <StatusBadge
-                        value={row.brdStatus}
-                        onChange={(v) => updateMutation.mutate({ id: row.id, body: { brdStatus: v } })}
-                      />
-                    </td>
-                    {/* BRD Link */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <LinkCell
-                        value={row.brdLink}
-                        onChange={(v) => handleUpdate(row.id, "brdLink", v)}
-                      />
-                    </td>
-                    {/* Test Case Link */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <LinkCell
-                        value={row.testCaseLink}
-                        onChange={(v) => handleUpdate(row.id, "testCaseLink", v)}
-                      />
-                    </td>
-                    {/* Prototype */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <LinkCell
-                        value={row.prototype}
-                        onChange={(v) => handleUpdate(row.id, "prototype", v)}
-                      />
-                    </td>
-                    {/* Comment */}
-                    <td className="px-3 py-2 border-r border-b border-border/30">
-                      <TextCell
-                        value={row.comment}
-                        onChange={(v) => handleUpdate(row.id, "comment", v)}
-                        placeholder="Add a note…"
-                      />
-                    </td>
+                    {/* Feature — sticky left, always first visible */}
+                    {vis("feature") && (
+                      <td
+                        className={cn(
+                          "px-3 py-1 border-r border-b border-border/30 sticky left-0 z-10 overflow-hidden",
+                          i % 2 === 0 ? "bg-background" : "bg-muted/20",
+                          "group-hover:bg-primary/5",
+                        )}
+                      >
+                        <TextCell
+                          value={row.feature}
+                          onChange={(v) => handleUpdate(row.id, "feature", v)}
+                          placeholder="Feature name"
+                          bold
+                        />
+                      </td>
+                    )}
+                    {vis("assignee") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <TextCell value={row.assignee} onChange={(v) => handleUpdate(row.id, "assignee", v)} placeholder="Assignee" />
+                      </td>
+                    )}
+                    {vis("poc") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <TextCell value={row.poc} onChange={(v) => handleUpdate(row.id, "poc", v)} placeholder="POC" />
+                      </td>
+                    )}
+                    {vis("deadline") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <DateCell value={row.deadline} onChange={(v) => handleUpdate(row.id, "deadline", v)} />
+                      </td>
+                    )}
+                    {vis("priority") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <PriorityBadge value={row.priority} onChange={(v) => updateMutation.mutate({ id: row.id, body: { priority: v } })} />
+                      </td>
+                    )}
+                    {vis("prdStatus") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <StatusBadge value={row.prdStatus} onChange={(v) => updateMutation.mutate({ id: row.id, body: { prdStatus: v } })} />
+                      </td>
+                    )}
+                    {vis("figmaLink") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <LinkCell value={row.figmaLink} onChange={(v) => handleUpdate(row.id, "figmaLink", v)} placeholder="https://figma.com/..." />
+                      </td>
+                    )}
+                    {vis("prdLink") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <LinkCell value={row.prdLink} onChange={(v) => handleUpdate(row.id, "prdLink", v)} />
+                      </td>
+                    )}
+                    {vis("brdStatus") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <StatusBadge value={row.brdStatus} onChange={(v) => updateMutation.mutate({ id: row.id, body: { brdStatus: v } })} />
+                      </td>
+                    )}
+                    {vis("brdLink") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <LinkCell value={row.brdLink} onChange={(v) => handleUpdate(row.id, "brdLink", v)} />
+                      </td>
+                    )}
+                    {vis("testCaseLink") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <LinkCell value={row.testCaseLink} onChange={(v) => handleUpdate(row.id, "testCaseLink", v)} />
+                      </td>
+                    )}
+                    {vis("prototype") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <LinkCell value={row.prototype} onChange={(v) => handleUpdate(row.id, "prototype", v)} />
+                      </td>
+                    )}
+                    {vis("comment") && (
+                      <td className="px-3 py-1 border-r border-b border-border/30">
+                        <TextCell value={row.comment} onChange={(v) => handleUpdate(row.id, "comment", v)} placeholder="Add a note…" />
+                      </td>
+                    )}
                     {/* Delete */}
-                    <td className="px-2 py-2 border-b border-border/30">
+                    <td className="px-2 py-1 border-b border-border/30">
                       <button
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(row.id)}
