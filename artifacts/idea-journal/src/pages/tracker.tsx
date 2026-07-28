@@ -419,6 +419,28 @@ export default function TrackerPage() {
   const [titleDraft, setTitleDraft] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // Editable column headers
+  const [colLabels, setColLabels] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("trackerColLabels") ?? "{}"); }
+    catch { return {}; }
+  });
+  const [editingColKey, setEditingColKey] = useState<string | null>(null);
+  const [colLabelDraft, setColLabelDraft] = useState("");
+
+  const startEditCol = (key: string, current: string) => {
+    setEditingColKey(key);
+    setColLabelDraft(current);
+  };
+  const commitColLabel = () => {
+    if (!editingColKey) return;
+    const trimmed = colLabelDraft.trim();
+    const defaultLabel = COLUMNS.find((c) => c.key === editingColKey)?.label ?? editingColKey;
+    const next = { ...colLabels, [editingColKey]: trimmed || defaultLabel };
+    setColLabels(next);
+    localStorage.setItem("trackerColLabels", JSON.stringify(next));
+    setEditingColKey(null);
+  };
+
   const startEditTitle = () => {
     setTitleDraft(pageTitle);
     setEditingTitle(true);
@@ -630,22 +652,46 @@ export default function TrackerPage() {
         )}
 
         {/* Table */}
-        <div className="rounded-xl border overflow-auto shadow-sm">
-          <table className="w-full text-sm border-collapse">
+        <div className="rounded-xl border overflow-auto shadow-sm max-h-[calc(100vh-220px)]">
+          <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="bg-primary text-primary-foreground">
-                {COLUMNS.map((col) => (
+                {COLUMNS.map((col, colIdx) => (
                   <th
                     key={col.key}
                     className={cn(
-                      "px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap border-r border-primary-foreground/20 last:border-r-0",
+                      "px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap border-r border-b border-primary-foreground/20 bg-primary sticky top-0 z-20",
                       col.width,
+                      colIdx === 0 && "left-0 z-30",
                     )}
+                    style={colIdx === 0 ? { position: "sticky" } : undefined}
                   >
-                    {col.label}
+                    {editingColKey === col.key ? (
+                      <input
+                        value={colLabelDraft}
+                        onChange={(e) => setColLabelDraft(e.target.value)}
+                        onBlur={commitColLabel}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitColLabel();
+                          if (e.key === "Escape") setEditingColKey(null);
+                        }}
+                        className="bg-transparent border-b border-primary-foreground/60 outline-none text-primary-foreground placeholder:text-primary-foreground/50 w-full min-w-[60px]"
+                        style={{ width: `${Math.max(colLabelDraft.length, 4)}ch` }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        className="flex items-center gap-1 cursor-pointer group/hdr select-none"
+                        onClick={() => startEditCol(col.key, colLabels[col.key] ?? col.label)}
+                        title="Click to rename column"
+                      >
+                        {colLabels[col.key] ?? col.label}
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/hdr:opacity-60 transition-opacity shrink-0" />
+                      </span>
+                    )}
                   </th>
                 ))}
-                <th className="px-2 py-2.5 w-10 min-w-[40px]" />
+                <th className="px-2 py-2.5 w-10 min-w-[40px] bg-primary sticky top-0 z-20 border-b border-primary-foreground/20" />
               </tr>
             </thead>
             <tbody>
@@ -671,13 +717,19 @@ export default function TrackerPage() {
                   <tr
                     key={row.id}
                     className={cn(
-                      "border-b border-border/50 last:border-b-0 group transition-colors",
+                      "group transition-colors",
                       i % 2 === 0 ? "bg-background" : "bg-muted/20",
                       "hover:bg-primary/5",
                     )}
                   >
-                    {/* Feature */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    {/* Feature — sticky left */}
+                    <td
+                      className={cn(
+                        "px-3 py-2 border-r border-b border-border/30 sticky left-0 z-10",
+                        i % 2 === 0 ? "bg-background" : "bg-muted/20",
+                        "group-hover:bg-primary/5",
+                      )}
+                    >
                       <TextCell
                         value={row.feature}
                         onChange={(v) => handleUpdate(row.id, "feature", v)}
@@ -686,7 +738,7 @@ export default function TrackerPage() {
                       />
                     </td>
                     {/* Assignee */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <TextCell
                         value={row.assignee}
                         onChange={(v) => handleUpdate(row.id, "assignee", v)}
@@ -694,7 +746,7 @@ export default function TrackerPage() {
                       />
                     </td>
                     {/* POC */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <TextCell
                         value={row.poc}
                         onChange={(v) => handleUpdate(row.id, "poc", v)}
@@ -702,28 +754,28 @@ export default function TrackerPage() {
                       />
                     </td>
                     {/* Deadline */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <DateCell
                         value={row.deadline}
                         onChange={(v) => handleUpdate(row.id, "deadline", v)}
                       />
                     </td>
                     {/* Priority */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <PriorityBadge
                         value={row.priority}
                         onChange={(v) => updateMutation.mutate({ id: row.id, body: { priority: v } })}
                       />
                     </td>
                     {/* PRD Status */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <StatusBadge
                         value={row.prdStatus}
                         onChange={(v) => updateMutation.mutate({ id: row.id, body: { prdStatus: v } })}
                       />
                     </td>
                     {/* Figma Link */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <LinkCell
                         value={row.figmaLink}
                         onChange={(v) => handleUpdate(row.id, "figmaLink", v)}
@@ -731,42 +783,42 @@ export default function TrackerPage() {
                       />
                     </td>
                     {/* PRD Link */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <LinkCell
                         value={row.prdLink}
                         onChange={(v) => handleUpdate(row.id, "prdLink", v)}
                       />
                     </td>
                     {/* BRD Status */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <StatusBadge
                         value={row.brdStatus}
                         onChange={(v) => updateMutation.mutate({ id: row.id, body: { brdStatus: v } })}
                       />
                     </td>
                     {/* BRD Link */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <LinkCell
                         value={row.brdLink}
                         onChange={(v) => handleUpdate(row.id, "brdLink", v)}
                       />
                     </td>
                     {/* Test Case Link */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <LinkCell
                         value={row.testCaseLink}
                         onChange={(v) => handleUpdate(row.id, "testCaseLink", v)}
                       />
                     </td>
                     {/* Prototype */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <LinkCell
                         value={row.prototype}
                         onChange={(v) => handleUpdate(row.id, "prototype", v)}
                       />
                     </td>
                     {/* Comment */}
-                    <td className="px-3 py-2 border-r border-border/30">
+                    <td className="px-3 py-2 border-r border-b border-border/30">
                       <TextCell
                         value={row.comment}
                         onChange={(v) => handleUpdate(row.id, "comment", v)}
@@ -774,7 +826,7 @@ export default function TrackerPage() {
                       />
                     </td>
                     {/* Delete */}
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2 border-b border-border/30">
                       <button
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(row.id)}
