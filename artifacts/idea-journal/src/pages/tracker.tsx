@@ -217,75 +217,6 @@ function PriorityBadge({
   );
 }
 
-function LinkCell({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string | null;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? "");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const commit = () => {
-    setEditing(false);
-    if (draft !== (value ?? "")) onChange(draft);
-  };
-
-  if (editing) {
-    return (
-      <Input
-        ref={inputRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === "Tab") commit();
-          if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
-        }}
-        className="h-7 text-xs border-primary/50 px-2"
-        placeholder={placeholder ?? "https://..."}
-        autoFocus
-      />
-    );
-  }
-
-  if (value) {
-    return (
-      <div className="flex items-center gap-1 group w-full">
-        <a
-          href={value.startsWith("http") ? value : `https://${value}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-primary underline underline-offset-2 truncate max-w-[120px] hover:text-primary/80"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {value.replace(/^https?:\/\//, "").slice(0, 24)}…
-        </a>
-        <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100" />
-        <button
-          className="text-muted-foreground hover:text-foreground ml-auto opacity-0 group-hover:opacity-100 shrink-0"
-          onClick={() => { setDraft(value); setEditing(true); }}
-        >
-          <span className="text-[10px]">edit</span>
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      className="text-xs text-muted-foreground hover:text-foreground italic w-full text-left"
-      onClick={() => { setDraft(""); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}
-    >
-      Add link…
-    </button>
-  );
-}
-
 function TextCell({
   value,
   onChange,
@@ -300,6 +231,7 @@ function TextCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
+  const open = () => { setDraft(value ?? ""); setEditing(true); };
   const commit = () => {
     setEditing(false);
     if (draft !== (value ?? "")) onChange(draft);
@@ -315,7 +247,7 @@ function TextCell({
           if (e.key === "Enter" || e.key === "Tab") commit();
           if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
         }}
-        className="h-7 text-xs border-primary/50 px-2"
+        className="h-7 text-xs border-primary/60 px-2 bg-background"
         placeholder={placeholder}
         autoFocus
       />
@@ -324,14 +256,20 @@ function TextCell({
 
   return (
     <div
-      className={cn(
-        "cursor-text text-xs w-full min-h-[28px] flex items-center px-0.5 rounded hover:bg-muted/50 transition-colors",
-        bold ? "font-medium text-foreground" : "text-muted-foreground",
-        !value && "italic text-muted-foreground/60",
-      )}
-      onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+      className="flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 -mx-1 hover:bg-primary/8 transition-colors group/cell min-h-[28px]"
+      onClick={open}
+      title="Click to edit"
     >
-      {value || placeholder || "—"}
+      <span
+        className={cn(
+          "text-xs flex-1 truncate",
+          bold ? "font-medium text-foreground" : "text-foreground/80",
+          !value && "italic text-muted-foreground/50",
+        )}
+      >
+        {value || placeholder || <span className="text-muted-foreground/40">—</span>}
+      </span>
+      <Pencil className="h-3 w-3 text-muted-foreground/40 shrink-0 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
     </div>
   );
 }
@@ -346,6 +284,7 @@ function DateCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
+  const open = () => { setDraft(value ?? ""); setEditing(true); };
   const commit = () => {
     setEditing(false);
     if (draft !== (value ?? "")) onChange(draft);
@@ -362,26 +301,100 @@ function DateCell({
           if (e.key === "Enter") commit();
           if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
         }}
-        className="h-7 text-xs border-primary/50 px-2"
+        className="h-7 text-xs border-primary/60 px-2 bg-background"
         autoFocus
       />
     );
   }
 
   const display = value
-    ? new Date(value).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(value + "T00:00:00").toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })
     : null;
 
   return (
     <div
-      className={cn(
-        "cursor-text text-xs w-full min-h-[28px] flex items-center px-0.5 rounded hover:bg-muted/50 transition-colors",
-        !display && "italic text-muted-foreground/60",
-      )}
-      onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+      className="flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 -mx-1 hover:bg-primary/8 transition-colors group/cell min-h-[28px]"
+      onClick={open}
+      title="Click to edit date"
     >
-      {display || "Set date…"}
+      <span className={cn("text-xs flex-1", !display && "italic text-muted-foreground/50")}>
+        {display || "Set date…"}
+      </span>
+      <Pencil className="h-3 w-3 text-muted-foreground/40 shrink-0 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
     </div>
+  );
+}
+
+function LinkCell({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string | null;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const open = () => { setDraft(value ?? ""); setEditing(true); };
+  const commit = () => {
+    setEditing(false);
+    if (draft !== (value ?? "")) onChange(draft);
+  };
+
+  if (editing) {
+    return (
+      <Input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === "Tab") commit();
+          if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
+        }}
+        className="h-7 text-xs border-primary/60 px-2 bg-background"
+        placeholder={placeholder ?? "https://…"}
+        autoFocus
+      />
+    );
+  }
+
+  if (value) {
+    return (
+      <div className="flex items-center gap-1 group/cell min-h-[28px]">
+        <a
+          href={value.startsWith("http") ? value : `https://${value}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary underline underline-offset-2 truncate max-w-[110px] hover:text-primary/70"
+          onClick={(e) => e.stopPropagation()}
+          title={value}
+        >
+          {value.replace(/^https?:\/\//, "").replace(/\/$/, "").slice(0, 20)}…
+        </a>
+        <ExternalLink className="h-3 w-3 text-muted-foreground/50 shrink-0 opacity-0 group-hover/cell:opacity-100" />
+        <button
+          className="ml-auto shrink-0 opacity-0 group-hover/cell:opacity-100 rounded p-0.5 hover:bg-muted transition-all"
+          onClick={open}
+          title="Edit link"
+        >
+          <Pencil className="h-3 w-3 text-muted-foreground" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className="flex items-center gap-1 text-xs text-muted-foreground/50 italic hover:text-primary/70 transition-colors w-full group/cell min-h-[28px]"
+      onClick={open}
+    >
+      <span>Add link…</span>
+      <Pencil className="h-3 w-3 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+    </button>
   );
 }
 
